@@ -19,6 +19,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
       - name: Setup Python
         env:
           RABBITMQ_PORT: ${{ job.services.rabbitmq.ports[5672] }}
@@ -30,7 +31,7 @@ jobs:
         run: |
           pip install pre-commit
           pre-commit run --all-files
-        if: matrix.python == 3.5
+        if: matrix.python == 3.8
 
       - name: Run test suite
         env:
