@@ -21,8 +21,6 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup Python
-        env:
-          RABBITMQ_PORT: ${{ job.services.rabbitmq.ports[5672] }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
@@ -35,9 +33,11 @@ jobs:
 
       - name: Run test suite
         env:
+          RABBITMQ_PORT: ${{ job.services.rabbitmq.ports[5672] }}
           REPORT: xml
         # Run tox using the version of Python in `PATH`
         run: |
+          echo $RABBITMQ_PORT
           pip install tox
           tox -e py
 
