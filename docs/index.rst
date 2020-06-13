@@ -3,6 +3,9 @@ PyRMQ
 .. image:: https://img.shields.io/github/workflow/status/altusgerona/pyrmq/Test%20across%20Python%20versions?style=for-the-badge
     :target: https://github.com/altusgerona/pyrmq/actions
 
+.. image:: https://img.shields.io/pypi/pyversions/pyrmq?style=for-the-badge
+    :target: https://pypi.org/project/PyRMQ/
+
 .. image:: https://img.shields.io/codecov/c/github/altusgerona/pyrmq/master.svg?style=for-the-badge
     :target: https://codecov.io/gh/altusgerona/pyrmq
 
@@ -13,6 +16,10 @@ PyRMQ
     :target: https://github.com/psf/black
 
 Python with RabbitMQ—simplified so you won't have to.
+
+Development Status
+------------------
+**Note**: Development status is Pre-Alpha
 
 Features
 --------
@@ -25,6 +32,12 @@ does it for you.
 
 Quickstart
 ----------
+PyRMQ is available at `PyPI`_.
+
+.. code-block:: console
+
+    $ pip install pyrmq
+
 Just instantiate the feature you want with their respective settings.
 PyRMQ already works out of the box with RabbitMQ's `default initialization settings`_.
 
@@ -48,3 +61,4 @@ User Guide
 
 .. _pika: https://pypi.org/project/pika/
 .. _default initialization settings: https://hub.docker.com/_/rabbitmq)
+.. _PyPI: https://pypi.org/project/PyRMQ/
