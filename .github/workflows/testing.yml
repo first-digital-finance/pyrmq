@@ -38,7 +38,7 @@ jobs:
       - name: Run test suite
         env:
           RABBITMQ_PORT: ${{ job.services.rabbitmq.ports[5672] }}
-          RABBITMQ_HOST: rabbitmq
+          RABBITMQ_HOST: localhost
           REPORT: xml
         # Run tox using the version of Python in `PATH`
         run: |
