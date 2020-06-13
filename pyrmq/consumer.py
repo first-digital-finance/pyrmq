@@ -9,6 +9,7 @@
 """
 
 import logging
+import os
 import time
 
 import json
@@ -58,7 +59,7 @@ class Consumer(object):
         self.routing_key = routing_key
         self.message_received_callback = callback
         self.host = kwargs.get("host") or "localhost"
-        self.port = kwargs.get("port") or 5672
+        self.port = kwargs.get("port") or os.getenv("RABBITMQ_PORT") or 5672
         self.username = kwargs.get("username") or "guest"
         self.password = kwargs.get("password") or "guest"
         self.connection_attempts = kwargs.get("connection_attempts") or 3

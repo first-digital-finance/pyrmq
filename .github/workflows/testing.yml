@@ -1,0 +1,51 @@
+name: Test across Python versions
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    services:
+      rabbitmq:
+        image: rabbitmq:latest
+        ports:
+          - 5672/tcp
+        options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
+
+    strategy:
+      matrix:
+        python: [3.5, 3.6, 3.7, 3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        env:
+          RABBITMQ_PORT: ${{ job.services.rabbitmq.ports[5672] }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Run linter
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files
+        if: matrix.python == 3.5
+
+      - name: Run test suite
+        env:
+          REPORT: xml
+        # Run tox using the version of Python in `PATH`
+        run: |
+          pip install tox
+          tox -e py
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+          file: ./coverage.xml
+          flags: tests
+          name: codecov-umbrella
+          fail_ci_if_error: true
+        if: matrix.python == 3.8
