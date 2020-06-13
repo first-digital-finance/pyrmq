@@ -16,7 +16,7 @@ Run Docker image (recommended)
 
     $ docker run -d --hostname my-rabbit --name rabbitmq -p 5672:5672 rabbitmq:alpine
 
-This allows you to connect to RabbitMQ via http://127.0.0.1:5672. Default credentials are
+This allows you to connect to RabbitMQ via localhost through port 5672. Default credentials are
 ``guest``/``guest``.
 
 Install and run RabbitMQ locally

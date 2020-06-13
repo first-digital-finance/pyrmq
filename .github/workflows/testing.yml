@@ -29,6 +29,14 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - name: Install Tox
+        run: pip install tox
+
+      - name: Check links in Documentation
+        run: |
+          tox -e doclinks
+        if: matrix.python == 3.8
+
       - name: Run linter
         run: |
           pip install pre-commit
@@ -42,8 +50,6 @@ jobs:
           REPORT: xml
         # Run tox using the version of Python in `PATH`
         run: |
-          echo $RABBITMQ_PORT
-          pip install tox
           tox -e py
 
       - name: Upload coverage to Codecov

@@ -1,14 +1,16 @@
 <!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
   <h1>PyRMQ</h1>
+  <a href="https://github.com/altusgerona/pyrmq/actions"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/altusgerona/pyrmq/Test%20across%20Python%20versions?style=for-the-badge"></a>
+  <a href="https://codecov.io/gh/altusgerona/pyrmq"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/altusgerona/pyrmq/master.svg?style=for-the-badge"></a>
   <a href="https://mit-license.org" target="_blank"><img src="https://img.shields.io/badge/license-MIT-blue.svg?longCache=true&style=for-the-badge" alt="License"></a> 
   <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg?longCache=true&style=for-the-badge"></a>
   <p>Python with RabbitMQ—simplified so you won't have to.</p>
 </div>
 
+
 ## Development Status
 **Note**: Currently under active development.
-
 ## Features
 - Use out-of-the-box and thread-safe `Consumer` and `Publisher` classes created from `pika` for your projects and tests.
 - Built-in retry-backoff logic for connecting, consuming, and publishing. 
