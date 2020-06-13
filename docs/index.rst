@@ -16,7 +16,6 @@ does it for you.
 - Use out-of-the-box and thread-safe `Consumer` and `Publisher` classes created from `pika`_ for your projects and tests.
 - Built-in retry-backoff logic for connecting, consuming, and publishing.
 - Works with Python 3.
-- Production ready.
 
 Quickstart
 ----------

@@ -6,11 +6,13 @@
   <p>Python with RabbitMQ—simplified so you won't have to.</p>
 </div>
 
+## Development Status
+**Note**: Currently under active development.
+
 ## Features
 - Use out-of-the-box and thread-safe `Consumer` and `Publisher` classes created from `pika` for your projects and tests.
 - Built-in retry-backoff logic for connecting, consuming, and publishing. 
 - Works with Python 3.
-- Production ready.
 
 ## Getting Started
 ### Installation
