@@ -34,7 +34,7 @@ jobs:
 
       - name: Check links in Documentation
         run: |
-          tox -e doclinks
+          tox -e linkcheck
         if: matrix.python == 3.8
 
       - name: Run linter
