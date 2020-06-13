@@ -58,7 +58,7 @@ class Consumer(object):
         self.queue_name = queue_name
         self.routing_key = routing_key
         self.message_received_callback = callback
-        self.host = kwargs.get("host") or "localhost"
+        self.host = kwargs.get("host") or os.getenv("RABBITMQ_HOST") or "localhost"
         self.port = kwargs.get("port") or os.getenv("RABBITMQ_PORT") or 5672
         self.username = kwargs.get("username") or "guest"
         self.password = kwargs.get("password") or "guest"

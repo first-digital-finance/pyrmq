@@ -51,8 +51,8 @@ class Publisher(object):
         self.exchange_name = exchange_name
         self.queue_name = queue_name
         self.routing_key = routing_key
-        self.host = kwargs.get("host") or "localhost"
-        self.port = kwargs.get("port") or 5672
+        self.host = kwargs.get("host") or os.getenv("RABBITMQ_HOST") or "localhost"
+        self.port = kwargs.get("port") or os.getenv("RABBITMQ_PORT") or 5672
         self.username = kwargs.get("username") or "guest"
         self.password = kwargs.get("password") or "guest"
         self.connection_attempts = kwargs.get("connection_attempts") or 3
