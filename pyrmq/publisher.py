@@ -1,0 +1,182 @@
+"""
+    Python with RabbitMQ—simplified so you won't have to.
+    This module implements PyRMQ Publisher class
+
+    :copyright: 2020-Present by Alexandre Gerona.
+    :license: MIT, see LICENSE for more details.
+
+    Full documentation is available at https://pyrmq.readthedocs.io
+"""
+
+import json
+import os
+import threading
+import time
+
+from pika import (
+    BasicProperties,
+    BlockingConnection,
+    PlainCredentials,
+    ConnectionParameters,
+)
+from pika.adapters.blocking_connection import BlockingChannel
+from pika.exceptions import AMQPConnectionError, AMQPChannelError, StreamLostError
+from pika.spec import PERSISTENT_DELIVERY_MODE
+
+
+CONNECTION_ERRORS = (AMQPConnectionError, ConnectionResetError, StreamLostError)
+CHANNEL_ERROR = AMQPChannelError
+
+
+class Publisher(object):
+    """
+    This class offers a ``BlockingConnection`` from pika that automatically handles
+    queue declares and bindings plus retry logic built for its connection and publishing.
+    """
+
+    def __init__(self, exchange_name: str, queue_name: str, routing_key: str, **kwargs):
+        """
+        :param exchange_name: Your exchange name.
+        :param queue_name: Your queue name.
+        :param routing_key: Your queue name.
+        :keyword host: Your RabbitMQ host. Default: ``"localhost"``
+        :keyword port: Your RabbitMQ port. Default: ``5672``
+        :keyword username: Your RabbitMQ username. Default: ``"guest"``
+        :keyword password: Your RabbitMQ password. Default: ``"guest"``
+        :keyword connection_attempts: How many times should PyRMQ try?. Default: ``3``
+        :keyword retry_delay: Seconds between retries.. Default: ``5``
+        :keyword retry_backoff_base: Exponential backoff base in seconds. Default: ``2``
+        :keyword retry_backoff_constant_secs: Exponential backoff constant in seconds. Default: ``5``
+        """
+        self.exchange_name = exchange_name
+        self.queue_name = queue_name
+        self.routing_key = routing_key
+        self.host = kwargs.get("host") or "localhost"
+        self.port = kwargs.get("port") or 5672
+        self.username = kwargs.get("username") or "guest"
+        self.password = kwargs.get("password") or "guest"
+        self.connection_attempts = kwargs.get("connection_attempts") or 3
+        self.retry_delay = kwargs.get("retry_delay") or 5
+        self.retry_backoff_base = kwargs.get("retry_backoff_base") or 2
+        self.retry_backoff_constant_secs = (
+            kwargs.get("retry_backoff_constant_secs") or 5
+        )
+
+        self.connection_parameters = ConnectionParameters(
+            host=self.host,
+            port=self.port,
+            credentials=PlainCredentials(self.username, self.password),
+            connection_attempts=self.connection_attempts,
+            retry_delay=self.retry_delay,
+        )
+
+        self.connections = {}
+        self.channels = {}
+
+    def __send_reconnection_error_message(self, retry_count, error) -> None:
+        """
+        Send error message to your preferred location.
+        :param retry_count: Amount retries the Publisher tried before sending an error message.
+        :param error: Error that prevented the Publisher from sending the message.
+        """
+        message = (
+            f"Service tried to reconnect to queue **{retry_count}** times "
+            f"but still failed."
+            f"\n{repr(error)}"
+        )
+        print(message)
+
+    def __create_connection(self) -> BlockingConnection:
+        """
+        Creates pika's ``BlockingConnection`` from the given connection parameters.
+        """
+        return BlockingConnection(self.connection_parameters)
+
+    def declare_queue(self, channel) -> None:
+        """
+        Declare and a bind a channel to a queue.
+        :param channel: pika Channel
+        """
+        channel.exchange_declare(exchange=self.exchange_name, durable=True)
+        channel.queue_declare(queue=self.queue_name, durable=True)
+        channel.queue_bind(
+            queue=self.queue_name,
+            exchange=self.exchange_name,
+            routing_key=self.routing_key,
+        )
+
+    def connect(self, retry_count=1) -> (BlockingConnection, BlockingChannel):
+        """
+        Creates pika's ``BlockingConnection`` and initializes queue bindings.
+        :param retry_count: Amount retries the Publisher tried before sending an error message.
+        """
+        try:
+            connection = self.__create_connection()
+            channel = connection.channel()
+
+            self.declare_queue(channel)
+
+            return connection, channel
+
+        except CONNECTION_ERRORS as error:
+            if retry_count == self.connection_attempts:
+                self.__send_reconnection_error_message(retry_count, error)
+                return
+            time.sleep(self.retry_delay)
+
+            return self.connect(retry_count=(retry_count + 1))
+
+    def publish(self, data: dict, attempt=0, retry_count=1) -> None:
+        """
+        Publishes data to RabbitMQ.
+        :param data: Data to be published.
+        :param attempt: Number of attempts made.
+        :param retry_count: Amount retries the Publisher tried before sending an error message.
+        """
+        worker_id = os.getpid()
+        ident = f"{worker_id}-{threading.currentThread().ident}"
+
+        if worker_id not in self.connections:
+            connection, channel = self.connect()
+            self.connections[worker_id] = connection
+            self.channels[ident] = channel
+
+        if ident not in self.channels:
+            channel = self.connections[worker_id].channel()
+            self.declare_queue(channel)
+            self.channels[ident] = channel
+
+        channel = self.channels[ident]
+
+        try:
+            basic_properties_kwargs = {
+                "delivery_mode": PERSISTENT_DELIVERY_MODE,
+            }
+
+            channel.basic_publish(
+                exchange=self.exchange_name,
+                routing_key=self.routing_key,
+                body=json.dumps(data),
+                properties=BasicProperties(**basic_properties_kwargs),
+            )
+
+        except CONNECTION_ERRORS as error:
+            if not (retry_count % self.connection_attempts):
+                self.__send_reconnection_error_message(retry_count, error)
+                return
+
+            time.sleep(self.retry_delay)
+
+            connection, channel = self.connect()
+            self.connections[worker_id] = connection
+            self.channels[ident] = channel
+
+            self.publish(data, attempt=attempt, retry_count=(retry_count + 1))
+
+        except CHANNEL_ERROR as error:
+            if not (retry_count % self.connection_attempts):
+                self.__send_reconnection_error_message(retry_count, error)
+                return
+
+            time.sleep(self.retry_delay)
+            self.publish(data, attempt=attempt, retry_count=(retry_count + 1))

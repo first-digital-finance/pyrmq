@@ -1,0 +1,38 @@
+# IDE
+.idea
+.vscode/
+.devcontainer/
+
+# Logs
+*.log
+*.log.*
+*.pyc
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+.eggs/
+
+# Installer logs
+pip-log.txt
+
+# Testing
+.benchmarks/
+.cache
+.coverage
+coverage.xml
+.pytest_cache/
+.tox
+htmlcov
+
+#Docs
+_build
