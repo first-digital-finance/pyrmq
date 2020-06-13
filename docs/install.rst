@@ -5,8 +5,8 @@ There are multiple ways to install PyRMQ as long as multiple versions to
 choose from.
 
 
-Stable and Production-Ready Version
------------------------------------
+Stable Version
+--------------
 
 PyRMQ is available at `PyPI`_.
 

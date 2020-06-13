@@ -2,6 +2,7 @@
 <div align="center">
   <h1>PyRMQ</h1>
   <a href="https://github.com/altusgerona/pyrmq/actions"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/altusgerona/pyrmq/Test%20across%20Python%20versions?style=for-the-badge"></a>
+  <a href="https://pypi.org/project/PyRMQ/"><img alt="Supports Python >= 3.5" src="https://img.shields.io/pypi/pyversions/pyrmq?style=for-the-badge"/></a>
   <a href="https://pyrmq.readthedocs.io"><img src='https://readthedocs.org/projects/pyrmq/badge/?version=latest&style=for-the-badge' alt='Documentation Status' /></a>
   <a href="https://codecov.io/gh/altusgerona/pyrmq"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/altusgerona/pyrmq/master.svg?style=for-the-badge"></a>
   <a href="https://mit-license.org" target="_blank"><img src="https://img.shields.io/badge/license-MIT-blue.svg?longCache=true&style=for-the-badge" alt="License"></a> 
@@ -11,8 +12,11 @@
 
 
 ## Development Status
-**Note**: Currently under active development.
+**Note**: Development status is Pre-Alpha
+
 ## Features
+Stop worrying about boilerplating and implementing retry logic for your queues. PyRMQ already
+does it for you.
 - Use out-of-the-box and thread-safe `Consumer` and `Publisher` classes created from `pika` for your projects and tests.
 - Built-in retry-backoff logic for connecting, consuming, and publishing. 
 - Works with Python 3.
@@ -55,9 +59,7 @@ Consumer(
 ```
 
 ## Documentation
-Complete document is found at https://pyrmq.readthedocs.io
-
- run build and generate coverage report.
+Visit https://pyrmq.readthedocs.io for the most up-to-date documentation.
 
 
 ## Testing

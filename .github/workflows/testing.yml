@@ -33,14 +33,11 @@ jobs:
         run: pip install tox
 
       - name: Check links in Documentation
-        run: |
-          tox -e linkcheck
+        run: tox -e linkcheck
         if: matrix.python == 3.8
 
       - name: Run linter
-        run: |
-          pip install pre-commit
-          pre-commit run --all-files
+        run: tox -e linting
         if: matrix.python == 3.8
 
       - name: Run test suite
@@ -49,8 +46,7 @@ jobs:
           RABBITMQ_HOST: localhost
           REPORT: xml
         # Run tox using the version of Python in `PATH`
-        run: |
-          tox -e py
+        run: tox -e py
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
