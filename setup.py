@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 DESCRIPTION = "Python with RabbitMQ—simplified so you won't have to."
 LONG_DESCRIPTION = open("README.md").read()
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 setup_requires = (
     ["pytest-runner"] if any(x in sys.argv for x in ("pytest", "test", "ptr")) else []
@@ -31,7 +31,7 @@ setup(
             ("Issue tracker", "https://github.com/altusgerona/pyrmq/issues"),
         )
     ),
-    license="ISC",
+    license="MIT",
     platforms=["any"],
     packages=find_packages(include="pyrmq"),
     include_package_data=True,
@@ -49,10 +49,8 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: Implementation :: PyPy",
     ],
 )
