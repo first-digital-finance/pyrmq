@@ -12,6 +12,7 @@ import json
 import os
 import threading
 import time
+import logging
 
 from pika import (
     BasicProperties,
@@ -22,7 +23,6 @@ from pika import (
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.exceptions import AMQPConnectionError, AMQPChannelError, StreamLostError
 from pika.spec import PERSISTENT_DELIVERY_MODE
-import logging
 
 CONNECTION_ERRORS = (AMQPConnectionError, ConnectionResetError, StreamLostError)
 CHANNEL_ERROR = AMQPChannelError
