@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 DESCRIPTION = "Python with RabbitMQ—simplified so you won't have to."
 LONG_DESCRIPTION = open("README.md").read()
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 
 setup_requires = (
     ["pytest-runner"] if any(x in sys.argv for x in ("pytest", "test", "ptr")) else []
