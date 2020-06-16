@@ -33,7 +33,7 @@ setup(
     ),
     license="MIT",
     platforms=["any"],
-    packages=find_packages(include="pyrmq"),
+    packages=find_packages(),
     include_package_data=True,
     setup_requires=setup_requires,
     tests_require=["pytest"],
