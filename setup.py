@@ -42,7 +42,7 @@ setup(
     keywords=["rabbitmq", "pika", "consumer", "publisher", "queue", "messages"],
     python_requires=">=3.5",
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "License :: OSI Approved :: MIT License",
