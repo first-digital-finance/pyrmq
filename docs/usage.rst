@@ -53,15 +53,17 @@ PyRMQ already works out of the box with RabbitMQ's `default initialization setti
     def callback(data):
         print(f"Received {data}!")
 
-    Consumer(
+    consumer = Consumer(
         exchange_name="exchange_name",
         queue_name="queue_name",
         routing_key="routing_key",
     )
 
-Instantiating the :class:`~pyrmq.Consumer` class starts its own thread that targets pika's `start_consuming`_ method
-on its own thread with default settings and an `exponential backoff logic`_ for its retries. Consumption
-calls `basic_ack`_ with ``delivery_tag`` set to what the message's ``method``'s was.
+    consumer.start()
+
+Once the :class:`~pyrmq.Consumer` class is instantiated, just run ``start()`` to start its own thread that targets
+pika's `start_consuming`_ method on its own thread with default settings and an `exponential backoff logic`_ for
+its retries. Consumption calls `basic_ack`_ with ``delivery_tag`` set to what the message's ``method``'s was.
 
 Retries
 ~~~~~~~

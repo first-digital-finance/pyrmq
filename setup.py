@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 DESCRIPTION = "Python with RabbitMQ—simplified so you won't have to."
 LONG_DESCRIPTION = open("README.md").read()
-VERSION = "0.1.2"
+VERSION = "1.0.0"
 
 setup_requires = (
     ["pytest-runner"] if any(x in sys.argv for x in ("pytest", "test", "ptr")) else []
@@ -22,7 +22,7 @@ setup(
     author="Alexandre Gerona",
     author_email="alecgerona@gmail.com",
     maintainer="Jasper Sibayan",
-    maintainer_email="jasper.sibayan@firstdigitalfinance.com",
+    maintainer_email="sibayanjasper@gmail.com",
     url="https://pyrmq.readthedocs.io",
     project_urls=OrderedDict(
         (

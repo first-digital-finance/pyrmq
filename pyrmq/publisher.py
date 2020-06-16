@@ -22,10 +22,12 @@ from pika import (
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.exceptions import AMQPConnectionError, AMQPChannelError, StreamLostError
 from pika.spec import PERSISTENT_DELIVERY_MODE
-
+import logging
 
 CONNECTION_ERRORS = (AMQPConnectionError, ConnectionResetError, StreamLostError)
 CHANNEL_ERROR = AMQPChannelError
+
+logger = logging.getLogger("pyrmq")
 
 
 class Publisher(object):
@@ -47,7 +49,10 @@ class Publisher(object):
         :keyword retry_delay: Seconds between retries.. Default: ``5``
         :keyword retry_backoff_base: Exponential backoff base in seconds. Default: ``2``
         :keyword retry_backoff_constant_secs: Exponential backoff constant in seconds. Default: ``5``
+        :keyword error_callback: Callback function to be called when connection_attempts is reached.
+        :keyword infinite_retry: Tells PyRMQ to keep on retrying to publish while firing error_callback, if any. Default: ``False``
         """
+
         self.exchange_name = exchange_name
         self.queue_name = queue_name
         self.routing_key = routing_key
@@ -61,6 +66,8 @@ class Publisher(object):
         self.retry_backoff_constant_secs = (
             kwargs.get("retry_backoff_constant_secs") or 5
         )
+        self.error_callback = kwargs.get("error_callback")
+        self.infinite_retry = kwargs.get("infinite_retry") or False
 
         self.connection_parameters = ConnectionParameters(
             host=self.host,
@@ -84,7 +91,10 @@ class Publisher(object):
             f"but still failed."
             f"\n{repr(error)}"
         )
-        print(message)
+        logger.exception(error)
+
+        if self.error_callback:
+            self.error_callback(message)
 
     def __create_connection(self) -> BlockingConnection:
         """
@@ -104,6 +114,7 @@ class Publisher(object):
             exchange=self.exchange_name,
             routing_key=self.routing_key,
         )
+        channel.confirm_delivery()
 
     def connect(self, retry_count=1) -> (BlockingConnection, BlockingChannel):
         """
@@ -119,7 +130,7 @@ class Publisher(object):
             return connection, channel
 
         except CONNECTION_ERRORS as error:
-            if retry_count == self.connection_attempts:
+            if not (retry_count % self.connection_attempts):
                 self.__send_reconnection_error_message(retry_count, error)
                 return
             time.sleep(self.retry_delay)
@@ -158,12 +169,14 @@ class Publisher(object):
                 routing_key=self.routing_key,
                 body=json.dumps(data),
                 properties=BasicProperties(**basic_properties_kwargs),
+                mandatory=True,
             )
 
         except CONNECTION_ERRORS as error:
             if not (retry_count % self.connection_attempts):
                 self.__send_reconnection_error_message(retry_count, error)
-                return
+                if not self.infinite_retry:
+                    raise error
 
             time.sleep(self.retry_delay)
 
@@ -176,7 +189,8 @@ class Publisher(object):
         except CHANNEL_ERROR as error:
             if not (retry_count % self.connection_attempts):
                 self.__send_reconnection_error_message(retry_count, error)
-                return
+                if not self.infinite_retry:
+                    raise error
 
             time.sleep(self.retry_delay)
             self.publish(data, attempt=attempt, retry_count=(retry_count + 1))
