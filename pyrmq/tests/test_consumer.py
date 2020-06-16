@@ -7,26 +7,13 @@
     Full documentation is available at https://pyrmq.readthedocs.io
 """
 
-from contextlib import suppress
 from time import sleep
 from unittest.mock import patch
 
 import pytest
-from pika.exceptions import (
-    StreamLostError,
-    AMQPConnectionError,
-    ConnectionWrongStateError,
-    ChannelWrongStateError,
-)
+from pika.exceptions import AMQPConnectionError
 from pyrmq import Consumer, Publisher
-
-possible_errors_from_channel_close = (
-    StreamLostError,
-    AssertionError,
-    ConnectionWrongStateError,
-    ChannelWrongStateError,
-    AttributeError,
-)
+from pyrmq.tests.conftest import TEST_EXCHANGE_NAME, TEST_QUEUE_NAME, TEST_ROUTING_KEY
 
 
 def wait_for_result(response, expected, tries=0, retry_after=0.6):
@@ -37,7 +24,7 @@ def wait_for_result(response, expected, tries=0, retry_after=0.6):
         return wait_for_result(response, expected, tries + 1)
 
 
-def should_consume_message(publisher_session: Publisher):
+def should_handle_exception_from_callback(publisher_session: Publisher):
     body = {"test": "test"}
     publisher_session.publish(body)
 
@@ -45,6 +32,7 @@ def should_consume_message(publisher_session: Publisher):
 
     def callback(data):
         response.update(data)
+        raise Exception
 
     consumer = Consumer(
         exchange_name=publisher_session.exchange_name,
@@ -52,65 +40,53 @@ def should_consume_message(publisher_session: Publisher):
         routing_key=publisher_session.routing_key,
         callback=callback,
     )
+    consumer.start()
     wait_for_result(response, body)
-    with suppress(possible_errors_from_channel_close):
-        consumer.close()
-
-
-def should_handle_exception_from_callback(publisher_session: Publisher):
-    body = {"test": "test"}
-    publisher_session.publish(body)
-
-    response = {}
-
-    def callback_with_exception(data):
-        response.update(data)
-        raise Exception
-
-    consumer = Consumer(
-        exchange_name=publisher_session.exchange_name,
-        queue_name=publisher_session.queue_name,
-        routing_key=publisher_session.routing_key,
-        callback=callback_with_exception,
-        connection_attempts=1,
-    )
-    wait_for_result(response, body)
-    with suppress(possible_errors_from_channel_close):
-        consumer.close()
+    consumer.close()
 
 
 def should_handle_error_when_connecting(publisher_session):
+    response = []
+
+    def error_callback(*args):
+        response.append(1)
+
     with patch(
         "pika.adapters.blocking_connection.BlockingConnection.__init__",
         side_effect=AMQPConnectionError,
     ):
-        with patch("time.sleep") as sleep_call:
+        with patch("time.sleep"):
             with pytest.raises(AMQPConnectionError):
                 consumer = Consumer(
                     exchange_name=publisher_session.exchange_name,
                     queue_name=publisher_session.queue_name,
                     routing_key=publisher_session.routing_key,
                     callback=lambda x: x,
+                    error_callback=error_callback,
                 )
-
-                # Assumes Publisher and Consumer's connection attempts are the same.
-                with suppress(possible_errors_from_channel_close):
-                    consumer.close()
-
-    assert sleep_call.call_count == publisher_session.connection_attempts - 1
+                consumer.start()
+                # No need to close since thread starts after successful connection
 
 
-def should_handle_error_when_consuming(publisher_session):
+def should_handle_error_when_consuming():
+    response = []
+
+    def error_callback(*args):
+        response.append(1)
+
     with patch(
-        "pika.adapters.blocking_connection.BlockingChannel.start_consuming",
+        "pika.adapters.blocking_connection.BlockingChannel.basic_consume",
         side_effect=AMQPConnectionError,
     ):
-        consumer = Consumer(
-            exchange_name=publisher_session.exchange_name,
-            queue_name=publisher_session.queue_name,
-            routing_key=publisher_session.routing_key,
-            callback=lambda x: x,
-        )
+        with patch("time.sleep"):
+            consumer = Consumer(
+                exchange_name=TEST_EXCHANGE_NAME,
+                queue_name=TEST_QUEUE_NAME,
+                routing_key=TEST_ROUTING_KEY,
+                callback=lambda x: x,
+                error_callback=error_callback,
+            )
+            consumer.start()
 
-        with suppress(possible_errors_from_channel_close):
+            wait_for_result(response, [1])
             consumer.close()

@@ -20,7 +20,7 @@ from pika.exceptions import AMQPConnectionError, ChannelClosedByBroker
 from threading import Thread
 
 
-logger = logging.getLogger("sentry")
+logger = logging.getLogger("pyrmq")
 CONNECTION_ERRORS = (AMQPConnectionError, ConnectionResetError, ChannelClosedByBroker)
 
 
@@ -37,7 +37,7 @@ class Consumer(object):
         queue_name: str,
         routing_key: str,
         callback: Callable,
-        **kwargs
+        **kwargs,
     ):
         """
         :param exchange_name: Your exchange name.
@@ -64,6 +64,10 @@ class Consumer(object):
         self.password = kwargs.get("password") or "guest"
         self.connection_attempts = kwargs.get("connection_attempts") or 3
         self.retry_delay = kwargs.get("retry_delay") or 5
+        self.error_callback = kwargs.get("error_callback")
+        self.infinite_retry = kwargs.get("infinite_retry") or False
+        self.channel = None
+        self.thread = None
 
         self.connection_parameters = ConnectionParameters(
             host=self.host,
@@ -73,12 +77,28 @@ class Consumer(object):
             retry_delay=self.retry_delay,
         )
 
+    def start(self):
         self.connect()
-        self.channel = self.connection.channel()
 
-        thread = Thread(target=self.consume)
-        thread.setDaemon(True)
-        thread.start()
+        self.thread = Thread(target=self.consume)
+        self.thread.setDaemon(True)
+        self.thread.start()
+
+    def __send_reconnection_error_message(self, retry_count, error) -> None:
+        """
+        Send error message to your preferred location.
+        :param retry_count: Amount retries the Publisher tried before sending an error message.
+        :param error: Error that prevented the Publisher from sending the message.
+        """
+        message = (
+            f"Service tried to reconnect to queue **{retry_count}** times "
+            f"but still failed."
+            f"\n{repr(error)}"
+        )
+        if self.error_callback:
+            self.error_callback(message)
+
+        logger.exception(error)
 
     def __create_connection(self) -> BlockingConnection:
         """
@@ -118,10 +138,13 @@ class Consumer(object):
         """
         try:
             self.connection = self.__create_connection()
+            self.channel = self.connection.channel()
 
         except CONNECTION_ERRORS as error:
-            if retry_count == self.connection_attempts:
-                raise error
+            if not (retry_count % self.connection_attempts):
+                self.__send_reconnection_error_message(retry_count, error)
+                if not self.infinite_retry:
+                    raise error
 
             time.sleep(self.retry_delay)
 
@@ -131,7 +154,7 @@ class Consumer(object):
         """
         Manually closes a connection to RabbitMQ. Useful for debugging and tests.
         """
-        self.connection.close()
+        self.thread.join(0.1)
 
     def consume(self, retry_count=1) -> None:
         """
@@ -143,8 +166,10 @@ class Consumer(object):
             self.channel.start_consuming()
 
         except CONNECTION_ERRORS as error:
-            if retry_count == self.connection_attempts:
-                raise error
+            if not (retry_count % self.connection_attempts):
+                self.__send_reconnection_error_message(retry_count, error)
+                if not self.infinite_retry:
+                    raise error
 
             time.sleep(self.retry_delay)
 
