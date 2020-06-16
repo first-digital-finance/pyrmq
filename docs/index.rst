@@ -1,13 +1,13 @@
 PyRMQ
 =====
 .. image:: https://img.shields.io/github/workflow/status/altusgerona/pyrmq/Test%20across%20Python%20versions?style=for-the-badge
-    :target: https://github.com/altusgerona/pyrmq/actions
+    :target: https://github.com/first-digital-finance/pyrmq
 
 .. image:: https://img.shields.io/pypi/pyversions/pyrmq?style=for-the-badge
     :target: https://pypi.org/project/PyRMQ/
 
 .. image:: https://img.shields.io/codecov/c/github/altusgerona/pyrmq/master.svg?style=for-the-badge
-    :target: https://codecov.io/gh/altusgerona/pyrmq
+    :target: https://codecov.io/gh/first-digital-finance/pyrmq
 
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg?longCache=true&style=for-the-badge
     :target: https://altusgerona.mit-license.org
