@@ -41,8 +41,8 @@ class Publisher(object):
         :param exchange_name: Your exchange name.
         :param queue_name: Your queue name.
         :param routing_key: Your queue name.
-        :keyword host: Your RabbitMQ host. Default: ``"localhost"``
-        :keyword port: Your RabbitMQ port. Default: ``5672``
+        :keyword host: Your RabbitMQ host. Checks env var ``RABBITMQ_HOST``. Default: ``"localhost"``
+        :keyword port: Your RabbitMQ port. Checks env var ``RABBITMQ_PORT``. Default: ``5672``
         :keyword username: Your RabbitMQ username. Default: ``"guest"``
         :keyword password: Your RabbitMQ password. Default: ``"guest"``
         :keyword connection_attempts: How many times should PyRMQ try?. Default: ``3``
