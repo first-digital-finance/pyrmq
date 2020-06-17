@@ -15,7 +15,7 @@
 Stop worrying about boilerplating and implementing retry logic for your queues. PyRMQ already
 does it for you.
 - Use out-of-the-box and thread-safe `Consumer` and `Publisher` classes created from `pika` for your projects and tests.
-- Built-in retry-backoff logic for connecting, consuming, and publishing. 
+- Built-in retry logic for connecting, consuming, and publishing. Can also handle infinite retries.
 - Works with Python 3.
 - Production ready
 

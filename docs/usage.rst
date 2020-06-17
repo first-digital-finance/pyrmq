@@ -17,7 +17,7 @@ specific settings. PyRMQ already works out of the box with RabbitMQ's `default i
     publisher.publish({"pyrmq": "My first message"})
 
 This publishes a message that uses a `BlockingConnection`_ on its own thread with default settings and
-an `exponential backoff logic`_ for its retries.
+and provides a handler for its retries.
 
 Retries
 ~~~~~~~
@@ -62,7 +62,7 @@ PyRMQ already works out of the box with RabbitMQ's `default initialization setti
     consumer.start()
 
 Once the :class:`~pyrmq.Consumer` class is instantiated, just run ``start()`` to start its own thread that targets
-pika's `start_consuming`_ method on its own thread with default settings and an `exponential backoff logic`_ for
+pika's `start_consuming`_ method on its own thread with default settings and and provides a handler for
 its retries. Consumption calls `basic_ack`_ with ``delivery_tag`` set to what the message's ``method``'s was.
 
 Retries
@@ -87,7 +87,6 @@ When PyRMQ has tried one too many times, it will call your specified callback.
 
 .. _default initialization settings: https://hub.docker.com/_/rabbitmq
 .. _BlockingConnection: https://pika.readthedocs.io/en/stable/modules/adapters/blocking.html
-.. _exponential backoff logic: https://en.wikipedia.org/wiki/Exponential_backoff
 .. _basic_publish: https://pika.readthedocs.io/en/stable/modules/channel.html#pika.channel.Channel.basic_publish
 .. _start_consuming: https://pika.readthedocs.io/en/stable/modules/adapters/blocking.html#pika.adapters.blocking_connection.BlockingChannel.start_consuming
 .. _basic_ack: https://pika.readthedocs.io/en/stable/modules/channel.html#pika.channel.Channel.basic_ack
