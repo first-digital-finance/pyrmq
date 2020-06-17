@@ -47,8 +47,6 @@ class Publisher(object):
         :keyword password: Your RabbitMQ password. Default: ``"guest"``
         :keyword connection_attempts: How many times should PyRMQ try?. Default: ``3``
         :keyword retry_delay: Seconds between retries.. Default: ``5``
-        :keyword retry_backoff_base: Exponential backoff base in seconds. Default: ``2``
-        :keyword retry_backoff_constant_secs: Exponential backoff constant in seconds. Default: ``5``
         :keyword error_callback: Callback function to be called when connection_attempts is reached.
         :keyword infinite_retry: Tells PyRMQ to keep on retrying to publish while firing error_callback, if any. Default: ``False``
         """
@@ -130,9 +128,12 @@ class Publisher(object):
             return connection, channel
 
         except CONNECTION_ERRORS as error:
-            if not (retry_count % self.connection_attempts):
-                self.__send_reconnection_error_message(retry_count, error)
-                return
+            self.__send_reconnection_error_message(
+                self.connection_attempts * retry_count, error
+            )
+            if not self.infinite_retry:
+                raise error
+
             time.sleep(self.retry_delay)
 
             return self.connect(retry_count=(retry_count + 1))

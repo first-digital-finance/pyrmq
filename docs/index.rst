@@ -23,7 +23,7 @@ Stop worrying about boilerplating and implementing retry logic on your queues. P
 does it for you.
 
 - Use out-of-the-box and thread-safe :class:`~pyrmq.Consumer` and :class:`~pyrmq.Publisher` classes created from `pika`_ for your projects and tests.
-- Built-in retry-backoff logic for connecting, consuming, and publishing.
+- Built-in retry logic for connecting, consuming, and publishing. Can also handle infinite retries.
 - Works with Python 3.
 - Production ready
 

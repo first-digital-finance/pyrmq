@@ -68,6 +68,32 @@ def should_handle_error_when_connecting(publisher_session):
                 # No need to close since thread starts after successful connection
 
 
+def should_handle_error_when_connecting_with_infinite_retry(publisher_session):
+    response = []
+
+    def error_callback(*args):
+        response.append(1)
+
+    with patch(
+        "pika.adapters.blocking_connection.BlockingConnection.__init__",
+        side_effect=AMQPConnectionError,
+    ):
+        with patch("time.sleep", side_effect=[None, None, Exception]) as sleep_call:
+            with pytest.raises(Exception):
+                consumer = Consumer(
+                    exchange_name=publisher_session.exchange_name,
+                    queue_name=publisher_session.queue_name,
+                    routing_key=publisher_session.routing_key,
+                    callback=lambda x: x,
+                    error_callback=error_callback,
+                    infinite_retry=True,
+                )
+                consumer.start()
+                # No need to close since thread starts after successful connection
+
+    assert sleep_call.call_count == 3
+
+
 def should_handle_error_when_consuming():
     response = []
 
