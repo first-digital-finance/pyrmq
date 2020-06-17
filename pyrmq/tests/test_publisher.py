@@ -32,10 +32,22 @@ def should_handle_connection_error_when_connecting():
             with pytest.raises((TypeError, AMQPConnectionError,)):
                 publisher.publish({})
 
-    assert sleep.call_count == publisher.connection_attempts - 1
+    # Should not sleep since infinite_retry is set to False
+    assert sleep.call_count == 0
 
 
-def should_handle_connection_error_when_publishing(publisher_session):
+def should_handle_connection_error_when_publishing():
+    from pyrmq import Publisher
+
+    def error_callback(error):
+        print("error", error)
+
+    publisher = Publisher(
+        exchange_name="incorrect_exchange_name",
+        queue_name="incorrect_queue_name",
+        routing_key="incorrect_routing_key",
+        error_callback=error_callback,
+    )
     body = {"sample_body": "value"}
     with patch(
         "pika.adapters.blocking_connection.BlockingChannel.basic_publish",
@@ -43,9 +55,9 @@ def should_handle_connection_error_when_publishing(publisher_session):
     ):
         with patch("time.sleep") as sleep:
             with pytest.raises(AMQPConnectionError):
-                publisher_session.publish(body)
+                publisher.publish(body)
 
-    assert sleep.call_count == publisher_session.connection_attempts - 1
+    assert sleep.call_count == publisher.connection_attempts - 1
 
 
 def should_handle_channel_error_when_publishing(publisher_session):
@@ -79,12 +91,12 @@ def should_handle_infinite_retry():
         "pika.adapters.blocking_connection.BlockingConnection.__init__",
         side_effect=AMQPConnectionError,
     ):
-        with patch("time.sleep") as sleep:
+        with patch("time.sleep", side_effect=[None, None, Exception]) as sleep_call:
             # noinspection PyTypeChecker
-            with pytest.raises(TypeError):
+            with pytest.raises(Exception):
                 publisher.publish({})
 
-    assert sleep.call_count == publisher.connection_attempts - 1
+            assert sleep_call.call_count == 3
 
 
 def should_handle_different_ident():

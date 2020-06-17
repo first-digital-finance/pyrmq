@@ -141,10 +141,9 @@ class Consumer(object):
             self.channel = self.connection.channel()
 
         except CONNECTION_ERRORS as error:
-            if not (retry_count % self.connection_attempts):
-                self.__send_reconnection_error_message(retry_count, error)
-                if not self.infinite_retry:
-                    raise error
+            self.__send_reconnection_error_message(retry_count, error)
+            if not self.infinite_retry:
+                raise error
 
             time.sleep(self.retry_delay)
 

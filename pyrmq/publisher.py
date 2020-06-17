@@ -130,9 +130,10 @@ class Publisher(object):
             return connection, channel
 
         except CONNECTION_ERRORS as error:
-            if not (retry_count % self.connection_attempts):
-                self.__send_reconnection_error_message(retry_count, error)
-                return
+            self.__send_reconnection_error_message(retry_count, error)
+            if not self.infinite_retry:
+                raise
+
             time.sleep(self.retry_delay)
 
             return self.connect(retry_count=(retry_count + 1))
