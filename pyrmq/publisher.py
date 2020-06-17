@@ -132,7 +132,7 @@ class Publisher(object):
         except CONNECTION_ERRORS as error:
             self.__send_reconnection_error_message(retry_count, error)
             if not self.infinite_retry:
-                raise
+                raise error
 
             time.sleep(self.retry_delay)
 
