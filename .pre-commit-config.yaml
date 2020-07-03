@@ -20,3 +20,17 @@ repos:
         types:
           - python
         exclude: ^docs/conf.py$
+
+  - repo: https://github.com/ambv/black
+    rev: stable
+    hooks:
+      - id: black
+        types:
+         - python
+
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: master
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
