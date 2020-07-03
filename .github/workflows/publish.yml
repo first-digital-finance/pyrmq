@@ -23,15 +23,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install setuptools wheel twine
 
-      - name: Setup node
+      - name: Run semantic-release
       - uses: actions/setup-node@v1
         with:
           node-version: '12'
-
-      - name: Run semantic-release
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           yarn global add semantic-release @semantic-release/changelog @semantic-release/exec @semantic-release/git @semantic-release/github
           semantic-release
