@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from os.path import join, dirname
 
 from setuptools import setup, find_packages
 import sys
@@ -6,7 +7,9 @@ from collections import OrderedDict
 
 DESCRIPTION = "Python with RabbitMQ—simplified so you won't have to."
 LONG_DESCRIPTION = open("README.md").read()
-VERSION = "1.1.0"
+
+with open(join(dirname(__file__), "VERSION"), "rb") as f:
+    VERSION = f.read().decode("ascii").strip()
 
 setup_requires = (
     ["pytest-runner"] if any(x in sys.argv for x in ("pytest", "test", "ptr")) else []
