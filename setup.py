@@ -41,7 +41,7 @@ setup(
     setup_requires=setup_requires,
     tests_require=["pytest"],
     test_suite="pyrmq.tests",
-    install_requires=["setuptools", "pika"],
+    install_requires=["setuptools==49.1.0", "pika==1.1.0"],
     keywords=["rabbitmq", "pika", "consumer", "publisher", "queue", "messages"],
     python_requires=">=3.5",
     classifiers=[
