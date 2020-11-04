@@ -116,3 +116,43 @@ def should_handle_error_when_consuming():
 
             wait_for_result(response, [1])
             consumer.close()
+
+
+def should_get_message_with_higher_priority(priority_session: Publisher):
+    expected = {"test": "test", "priority": 0}
+    for i in range(0, 10):
+        body = {"test": "test", "priority": i}
+        priority_session.publish(body, priority=i)
+    response = {}
+
+    def callback(data):
+        if not response:
+            """
+            Checks first message if it has the highest priority. Current max priority is 5
+            Messages with priority 5 and above will be treated as priority 5.
+            Thus, they will be queued after the first message received with the highest priority
+            Example 1:
+                message1 = {"test": "test", "priority": 10}
+                message2 = {"test": "test", "priority": 5}
+                message3 = {"test": "test", "priority": 8}
+            message1 will be on the queue first, followed by message2 then message3
+            Example 2:
+                message1 = {"test": "test", "priority": 4}
+                message2 = {"test": "test", "priority": 8}
+                message3 = {"test": "test", "priority": 5}
+            message2 will be on the queue first, followed by message3 then message1
+            """
+            first_expected = {"test": "test", "priority": 5}
+            assert first_expected == data
+        response.update(data)
+
+    consumer = Consumer(
+        exchange_name=priority_session.exchange_name,
+        queue_name=priority_session.queue_name,
+        routing_key=priority_session.routing_key,
+        callback=callback,
+    )
+    consumer.start()
+    # Last message received would always be message with lowest priority
+    wait_for_result(response, expected)
+    consumer.close()

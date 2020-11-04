@@ -10,7 +10,11 @@ from unittest.mock import patch, PropertyMock
 
 import pytest
 from pika.exceptions import AMQPConnectionError, AMQPChannelError
-from pyrmq.tests.conftest import TEST_EXCHANGE_NAME, TEST_QUEUE_NAME, TEST_ROUTING_KEY
+from pyrmq.tests.conftest import (
+    TEST_EXCHANGE_NAME,
+    TEST_QUEUE_NAME,
+    TEST_ROUTING_KEY,
+)
 
 
 def should_handle_connection_error_when_connecting():
@@ -29,7 +33,12 @@ def should_handle_connection_error_when_connecting():
     ):
         with patch("time.sleep") as sleep:
             # noinspection PyTypeChecker
-            with pytest.raises((TypeError, AMQPConnectionError,)):
+            with pytest.raises(
+                (
+                    TypeError,
+                    AMQPConnectionError,
+                )
+            ):
                 publisher.publish({})
 
     # Should not sleep since infinite_retry is set to False

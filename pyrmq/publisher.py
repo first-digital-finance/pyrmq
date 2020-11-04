@@ -108,12 +108,14 @@ class Publisher(object):
         :param channel: pika Channel
         """
         channel.exchange_declare(exchange=self.exchange_name, durable=True)
-        channel.queue_declare(queue=self.queue_name, arguments=self.arguments, durable=True)
+        channel.queue_declare(
+            queue=self.queue_name, arguments=self.arguments, durable=True
+        )
         channel.queue_bind(
             queue=self.queue_name,
             exchange=self.exchange_name,
             routing_key=self.routing_key,
-            arguments=self.arguments
+            arguments=self.arguments,
         )
         channel.confirm_delivery()
 
@@ -141,7 +143,7 @@ class Publisher(object):
 
             return self.connect(retry_count=(retry_count + 1))
 
-    def publish(self, data: dict,  priority=0, attempt=0, retry_count=1) -> None:
+    def publish(self, data: dict, priority=None, attempt=0, retry_count=1) -> None:
         """
         Publishes data to RabbitMQ.
         :param data: Data to be published.
@@ -167,7 +169,7 @@ class Publisher(object):
         try:
             basic_properties_kwargs = {
                 "delivery_mode": PERSISTENT_DELIVERY_MODE,
-                "priority": priority
+                "priority": priority,
             }
 
             channel.basic_publish(
