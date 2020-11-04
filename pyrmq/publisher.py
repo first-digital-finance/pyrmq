@@ -49,6 +49,7 @@ class Publisher(object):
         :keyword retry_delay: Seconds between retries.. Default: ``5``
         :keyword error_callback: Callback function to be called when connection_attempts is reached.
         :keyword infinite_retry: Tells PyRMQ to keep on retrying to publish while firing error_callback, if any. Default: ``False``
+        :keyword arguments: Your queue arguments. Default ``None``
         """
 
         self.exchange_name = exchange_name
@@ -66,6 +67,7 @@ class Publisher(object):
         )
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry") or False
+        self.arguments = kwargs.get("arguments") or None
 
         self.connection_parameters = ConnectionParameters(
             host=self.host,
@@ -106,11 +108,12 @@ class Publisher(object):
         :param channel: pika Channel
         """
         channel.exchange_declare(exchange=self.exchange_name, durable=True)
-        channel.queue_declare(queue=self.queue_name, durable=True)
+        channel.queue_declare(queue=self.queue_name, arguments=self.arguments, durable=True)
         channel.queue_bind(
             queue=self.queue_name,
             exchange=self.exchange_name,
             routing_key=self.routing_key,
+            arguments=self.arguments
         )
         channel.confirm_delivery()
 
@@ -138,10 +141,11 @@ class Publisher(object):
 
             return self.connect(retry_count=(retry_count + 1))
 
-    def publish(self, data: dict, attempt=0, retry_count=1) -> None:
+    def publish(self, data: dict,  priority=0, attempt=0, retry_count=1) -> None:
         """
         Publishes data to RabbitMQ.
         :param data: Data to be published.
+        :param priority: Message priority. Only works if ``x-max-priority`` is defined as queue argument.
         :param attempt: Number of attempts made.
         :param retry_count: Amount retries the Publisher tried before sending an error message.
         """
@@ -163,6 +167,7 @@ class Publisher(object):
         try:
             basic_properties_kwargs = {
                 "delivery_mode": PERSISTENT_DELIVERY_MODE,
+                "priority": priority
             }
 
             channel.basic_publish(
