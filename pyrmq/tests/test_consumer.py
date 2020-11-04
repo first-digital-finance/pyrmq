@@ -128,7 +128,7 @@ def should_get_message_with_higher_priority(priority_session: Publisher):
     def callback(data):
         if not response:
             """
-            Checks first message if it has the highest priority. 
+            Checks the first message if it has the highest priority.
             Dependent on ``x-max-priority`` argument. Test max priority is 5
             Messages with priority 5 and above will be treated as priority 5.
             Thus, they will be queued after the first message received with the highest priority

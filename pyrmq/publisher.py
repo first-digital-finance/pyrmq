@@ -67,7 +67,7 @@ class Publisher(object):
         )
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry") or False
-        self.arguments = kwargs.get("arguments") or None
+        self.queue_arguments = kwargs.get("queue_arguments") or None
 
         self.connection_parameters = ConnectionParameters(
             host=self.host,
@@ -109,13 +109,13 @@ class Publisher(object):
         """
         channel.exchange_declare(exchange=self.exchange_name, durable=True)
         channel.queue_declare(
-            queue=self.queue_name, arguments=self.arguments, durable=True
+            queue=self.queue_name, arguments=self.queue_arguments, durable=True
         )
         channel.queue_bind(
             queue=self.queue_name,
             exchange=self.exchange_name,
             routing_key=self.routing_key,
-            arguments=self.arguments,
+            arguments=self.queue_arguments,
         )
         channel.confirm_delivery()
 
