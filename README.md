@@ -38,6 +38,21 @@ publisher = Publisher(
 )
 publisher.publish({"pyrmq": "My first message"})
 ```
+#### Publish message with priorities
+Instatiate the queue with `x-max-priority` argument. Then, simply publish message with `priority`.
+Take note that message priority only works when `x-max-priority` is defined. Any number higher than max 
+priority is considered the same as the max priority.
+Read more about [message priorities here](https://www.rabbitmq.com/priority.html).
+```python
+from pyrmq import Publisher
+publisher = Publisher(
+    exchange_name="exchange_name",
+    queue_name="queue_name",
+    routing_key="routing_key",
+    queue_arguments={"x-max-priority": 3},
+)
+publisher.publish({"pyrmq": "My first message"}, priority=1)
+```
 #### Consuming
 Intantiating a `Consumer` automatically starts it in its own thread making it
 non-blocking by default. When run after the code from before, you should be
