@@ -40,7 +40,7 @@ publisher.publish({"pyrmq": "My first message"})
 ```
 #### Publish message with priorities
 To enable prioritization of messages, instantiate your queue with the queue 
-argument x-max-priority. It takes an integer that sets the number of possible 
+argument `x-max-priority`. It takes an integer that sets the number of possible 
 priority values with a higher number commanding more priority. Then, simply 
 publish your message with the priority argument specified. Any number higher 
 than the set max priority is floored or considered the same.
@@ -92,4 +92,3 @@ To test for a specific Python version:
 ```shell script
 tox -e py38
 ```
-
