@@ -39,10 +39,12 @@ publisher = Publisher(
 publisher.publish({"pyrmq": "My first message"})
 ```
 #### Publish message with priorities
-Instatiate the queue with `x-max-priority` argument. Then, simply publish message with `priority`.
-Take note that message priority only works when `x-max-priority` is defined. Any number higher than max 
-priority is considered the same as the max priority.
-Read more about [message priorities here](https://www.rabbitmq.com/priority.html).
+To enable prioritization of messages, instantiate your queue with the queue 
+argument x-max-priority. It takes an integer that sets the number of possible 
+priority values with a higher number commanding more priority. Then, simply 
+publish your message with the priority argument specified. Any number higher 
+than the set max priority is floored or considered the same.
+Read more about message priorities [here](https://www.rabbitmq.com/priority.html).
 ```python
 from pyrmq import Publisher
 publisher = Publisher(

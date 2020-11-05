@@ -161,6 +161,6 @@ def should_get_message_with_higher_priority(priority_session: Publisher):
         callback=callback,
     )
     consumer.start()
-    # Last message received would always be message with lowest priority
+    # Last message received with lowest priority
     wait_for_result(response, last_expected)
     consumer.close()
