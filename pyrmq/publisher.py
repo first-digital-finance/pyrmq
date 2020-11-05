@@ -49,7 +49,7 @@ class Publisher(object):
         :keyword retry_delay: Seconds between retries.. Default: ``5``
         :keyword error_callback: Callback function to be called when connection_attempts is reached.
         :keyword infinite_retry: Tells PyRMQ to keep on retrying to publish while firing error_callback, if any. Default: ``False``
-        :keyword arguments: Your queue arguments. Default ``None``
+        :keyword queue_args: Your queue arguments. Default ``None``
         """
 
         self.exchange_name = exchange_name
@@ -63,11 +63,11 @@ class Publisher(object):
         self.retry_delay = kwargs.get("retry_delay") or 5
         self.retry_backoff_base = kwargs.get("retry_backoff_base") or 2
         self.retry_backoff_constant_secs = (
-            kwargs.get("retry_backoff_constant_secs") or 5
+                kwargs.get("retry_backoff_constant_secs") or 5
         )
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry") or False
-        self.queue_arguments = kwargs.get("queue_arguments") or None
+        self.queue_args = kwargs.get("queue_args") or None
 
         self.connection_parameters = ConnectionParameters(
             host=self.host,
@@ -109,13 +109,13 @@ class Publisher(object):
         """
         channel.exchange_declare(exchange=self.exchange_name, durable=True)
         channel.queue_declare(
-            queue=self.queue_name, arguments=self.queue_arguments, durable=True
+            queue=self.queue_name, arguments=self.queue_args, durable=True
         )
         channel.queue_bind(
             queue=self.queue_name,
             exchange=self.exchange_name,
             routing_key=self.routing_key,
-            arguments=self.queue_arguments,
+            arguments=self.queue_args,
         )
         channel.confirm_delivery()
 
@@ -143,7 +143,7 @@ class Publisher(object):
 
             return self.connect(retry_count=(retry_count + 1))
 
-    def publish(self, data: dict, priority=None, attempt=0, retry_count=1) -> None:
+    def publish(self, data: dict, priority: int = None, attempt=0, retry_count=1) -> None:
         """
         Publishes data to RabbitMQ.
         :param data: Data to be published.

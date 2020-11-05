@@ -49,7 +49,7 @@ publisher = Publisher(
     exchange_name="exchange_name",
     queue_name="queue_name",
     routing_key="routing_key",
-    queue_arguments={"x-max-priority": 3},
+    queue_args={"x-max-priority": 3},
 )
 publisher.publish({"pyrmq": "My first message"}, priority=1)
 ```

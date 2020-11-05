@@ -119,9 +119,9 @@ def should_handle_error_when_consuming():
 
 
 def should_get_message_with_higher_priority(priority_session: Publisher):
-    expected = {"test": "test", "priority": 0}
+    expected = {"test": "test0"}
     for i in range(0, 10):
-        body = {"test": "test", "priority": i}
+        body = {"test": f"test{i}"}
         priority_session.publish(body, priority=i)
     response = {}
 
@@ -143,7 +143,7 @@ def should_get_message_with_higher_priority(priority_session: Publisher):
                 message3 = {"test": "test", "priority": 5}
             message2 will be on the queue first, followed by message3 then message1
             """
-            first_expected = {"test": "test", "priority": 5}
+            first_expected = {"test": "test5"}
             assert first_expected == data
         response.update(data)
 
