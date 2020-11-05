@@ -13,6 +13,7 @@ import os
 import threading
 import time
 import logging
+from typing import Optional
 
 from pika import (
     BasicProperties,
@@ -63,7 +64,7 @@ class Publisher(object):
         self.retry_delay = kwargs.get("retry_delay") or 5
         self.retry_backoff_base = kwargs.get("retry_backoff_base") or 2
         self.retry_backoff_constant_secs = (
-                kwargs.get("retry_backoff_constant_secs") or 5
+            kwargs.get("retry_backoff_constant_secs") or 5
         )
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry") or False
@@ -143,7 +144,9 @@ class Publisher(object):
 
             return self.connect(retry_count=(retry_count + 1))
 
-    def publish(self, data: dict, priority: int = None, attempt=0, retry_count=1) -> None:
+    def publish(
+        self, data: dict, priority: Optional[int] = None, attempt=0, retry_count=1
+    ) -> None:
         """
         Publishes data to RabbitMQ.
         :param data: Data to be published.

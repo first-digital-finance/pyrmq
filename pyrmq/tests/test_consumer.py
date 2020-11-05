@@ -6,7 +6,7 @@
 
     Full documentation is available at https://pyrmq.readthedocs.io
 """
-
+from random import randint
 from time import sleep
 from unittest.mock import patch
 
@@ -124,24 +124,34 @@ def should_handle_error_when_consuming():
 
 
 def should_get_message_with_higher_priority(priority_session: Publisher):
+    test_data = []
     for i in range(0, 10):
-        body = {"test": f"test{i}"}
-        if i >= TEST_ARGUMENTS["x-max-priority"]:
-            first_expected = body
-        priority_session.publish(body, priority=i)
+        rand_int = randint(0, 255)
+        body = {"test": f"test{rand_int}", "priority": rand_int}
+        priority_session.publish(body, priority=rand_int)
+        test_data.append(body)
     response = {}
 
-    last_expected = {"test": "test0"}
+    priority_data = [
+        pri_data
+        for pri_data in test_data
+        if pri_data["priority"] >= TEST_ARGUMENTS["x-max-priority"]
+    ]
+    priority_data.reverse()
+    less_priority_data = sorted(
+        [
+            pri_data
+            for pri_data in test_data
+            if pri_data["priority"] < TEST_ARGUMENTS["x-max-priority"]
+        ],
+        key=lambda x: x["priority"],
+    )
+    priority_sorted_data = [*less_priority_data, *priority_data]
+    last_expected = priority_sorted_data[0]
 
     def callback(data):
-        if not response:
-            """
-            Checks the first message if it has the highest priority.
-            Dependent on ``x-max-priority`` argument. Test max priority is 5
-            Messages with priority 5 and above will be treated as priority 5.
-            Thus, they will be queued after the first message received with the highest priority
-            """
-            assert first_expected == data
+        expected = priority_sorted_data.pop()
+        assert expected == data
         response.update(data)
 
     consumer = Consumer(
