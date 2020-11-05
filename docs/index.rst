@@ -49,6 +49,54 @@ PyRMQ already works out of the box with RabbitMQ's `default initialization setti
     )
     publisher.publish({"pyrmq": "My first message"})
 
+Publish message with priorities
+-------------------------------
+To enable prioritization of messages, instantiate your queue with the queue
+argument `x-max-priority`. It takes an integer that sets the number of possible
+priority values with a higher number commanding more priority. Then, simply
+publish your message with the priority argument specified. Any number higher
+than the set max priority is floored or considered the same.
+Read more about message priorities `here`_
+
+.. code-block:: python
+
+    from pyrmq import Publisher
+    publisher = Publisher(
+        exchange_name="exchange_name",
+        queue_name="queue_name",
+        routing_key="routing_key",
+        queue_args={"x-max-priority": 3}
+    )
+    publisher.publish({"pyrmq": "My first message"}, priority=1)
+
+.. warning::
+
+    Adding arguments on an existing queue is not possible. If you wish to add queue arguments,
+    you will need to either delete the existing queue then recreate the queue with arguments or simply
+    make a new queue with the arguments.
+
+Consuming
+----------
+Instantiating a :class:`~pyrmq.Consumer` automatically starts it in its own thread making it
+non-blocking by default. When run after the code from before, you should be
+able to receive the published data.
+
+.. code-block:: python
+
+    from pyrmq import Consumer
+
+
+    def callback(data):
+        print(f"Received {data}!")
+
+    consumer = Consumer(
+        exchange_name="exchange_name",
+        queue_name="queue_name",
+        routing_key="routing_key",
+    )
+
+    consumer.start()
+
 User Guide
 ----------
 .. toctree::
