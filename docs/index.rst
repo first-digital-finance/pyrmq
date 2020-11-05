@@ -108,3 +108,4 @@ User Guide
 .. _pika: https://pypi.org/project/pika/
 .. _default initialization settings: https://hub.docker.com/_/rabbitmq)
 .. _PyPI: https://pypi.org/project/PyRMQ/
+.. _here: https://www.rabbitmq.com/priority.html
