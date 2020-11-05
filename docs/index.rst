@@ -24,6 +24,7 @@ does it for you.
 
 - Use out-of-the-box and thread-safe :class:`~pyrmq.Consumer` and :class:`~pyrmq.Publisher` classes created from `pika`_ for your projects and tests.
 - Built-in retry logic for connecting, consuming, and publishing. Can also handle infinite retries.
+- Message priorities
 - Works with Python 3.
 - Production ready
 
