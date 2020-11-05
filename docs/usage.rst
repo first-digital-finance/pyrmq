@@ -39,8 +39,8 @@ Max retries reached
 ~~~~~~~~~~~~~~~~~~~
 When PyRMQ has tried one too many times, it will call your specified callback.
 
-Message Priority
-~~~~~~~~~~~~~~~~
+Publish message with priorities
+-------------------------------
 To enable prioritization of messages, instantiate your queue with the queue
 argument `x-max-priority`. It takes an integer that sets the number of possible
 priority values with a higher number commanding more priority. Then, simply

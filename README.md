@@ -16,6 +16,7 @@ Stop worrying about boilerplating and implementing retry logic for your queues. 
 does it for you.
 - Use out-of-the-box and thread-safe `Consumer` and `Publisher` classes created from `pika` for your projects and tests.
 - Built-in retry logic for connecting, consuming, and publishing. Can also handle infinite retries.
+- Message priorities
 - Works with Python 3.
 - Production ready
 
@@ -61,7 +62,7 @@ publisher.publish({"pyrmq": "My first message"}, priority=1)
 Adding arguments on an existing queue is not possible. If you wish to add queue arguments, you will need to either delete the existing queue then recreate the queue with arguments or simply make a new queue with the arguments.
 
 #### Consuming
-Intantiating a `Consumer` automatically starts it in its own thread making it
+Instantiating a `Consumer` automatically starts it in its own thread making it
 non-blocking by default. When run after the code from before, you should be
 able to receive the published data.
 ```python
