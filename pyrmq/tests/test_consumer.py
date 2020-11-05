@@ -13,7 +13,12 @@ from unittest.mock import patch
 import pytest
 from pika.exceptions import AMQPConnectionError
 from pyrmq import Consumer, Publisher
-from pyrmq.tests.conftest import TEST_EXCHANGE_NAME, TEST_QUEUE_NAME, TEST_ROUTING_KEY
+from pyrmq.tests.conftest import (
+    TEST_EXCHANGE_NAME,
+    TEST_QUEUE_NAME,
+    TEST_ROUTING_KEY,
+    TEST_ARGUMENTS,
+)
 
 
 def wait_for_result(response, expected, tries=0, retry_after=0.6):
@@ -119,11 +124,14 @@ def should_handle_error_when_consuming():
 
 
 def should_get_message_with_higher_priority(priority_session: Publisher):
-    expected = {"test": "test0"}
     for i in range(0, 10):
         body = {"test": f"test{i}"}
+        if i >= TEST_ARGUMENTS["x-max-priority"]:
+            first_expected = body
         priority_session.publish(body, priority=i)
     response = {}
+
+    last_expected = {"test": "test0"}
 
     def callback(data):
         if not response:
@@ -132,18 +140,7 @@ def should_get_message_with_higher_priority(priority_session: Publisher):
             Dependent on ``x-max-priority`` argument. Test max priority is 5
             Messages with priority 5 and above will be treated as priority 5.
             Thus, they will be queued after the first message received with the highest priority
-            Example 1:
-                message1 = {"test": "test", "priority": 10}
-                message2 = {"test": "test", "priority": 5}
-                message3 = {"test": "test", "priority": 8}
-            message1 will be on the queue first, followed by message2 then message3
-            Example 2:
-                message1 = {"test": "test", "priority": 4}
-                message2 = {"test": "test", "priority": 8}
-                message3 = {"test": "test", "priority": 5}
-            message2 will be on the queue first, followed by message3 then message1
             """
-            first_expected = {"test": "test5"}
             assert first_expected == data
         response.update(data)
 
@@ -155,5 +152,5 @@ def should_get_message_with_higher_priority(priority_session: Publisher):
     )
     consumer.start()
     # Last message received would always be message with lowest priority
-    wait_for_result(response, expected)
+    wait_for_result(response, last_expected)
     consumer.close()

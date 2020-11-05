@@ -32,7 +32,7 @@ def priority_publisher():
         exchange_name=TEST_EXCHANGE_NAME,
         queue_name=TEST_QUEUE_NAME,
         routing_key=TEST_ROUTING_KEY,
-        queue_arguments=TEST_ARGUMENTS,
+        queue_args=TEST_ARGUMENTS,
     )
     return publisher
 
