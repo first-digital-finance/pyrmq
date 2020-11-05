@@ -13,6 +13,7 @@ import os
 import threading
 import time
 import logging
+from typing import Optional
 
 from pika import (
     BasicProperties,
@@ -49,6 +50,7 @@ class Publisher(object):
         :keyword retry_delay: Seconds between retries.. Default: ``5``
         :keyword error_callback: Callback function to be called when connection_attempts is reached.
         :keyword infinite_retry: Tells PyRMQ to keep on retrying to publish while firing error_callback, if any. Default: ``False``
+        :keyword queue_args: Your queue arguments. Default ``None``
         """
 
         self.exchange_name = exchange_name
@@ -66,6 +68,7 @@ class Publisher(object):
         )
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry") or False
+        self.queue_args = kwargs.get("queue_args") or None
 
         self.connection_parameters = ConnectionParameters(
             host=self.host,
@@ -106,11 +109,14 @@ class Publisher(object):
         :param channel: pika Channel
         """
         channel.exchange_declare(exchange=self.exchange_name, durable=True)
-        channel.queue_declare(queue=self.queue_name, durable=True)
+        channel.queue_declare(
+            queue=self.queue_name, arguments=self.queue_args, durable=True
+        )
         channel.queue_bind(
             queue=self.queue_name,
             exchange=self.exchange_name,
             routing_key=self.routing_key,
+            arguments=self.queue_args,
         )
         channel.confirm_delivery()
 
@@ -138,10 +144,13 @@ class Publisher(object):
 
             return self.connect(retry_count=(retry_count + 1))
 
-    def publish(self, data: dict, attempt=0, retry_count=1) -> None:
+    def publish(
+        self, data: dict, priority: Optional[int] = None, attempt=0, retry_count=1
+    ) -> None:
         """
         Publishes data to RabbitMQ.
         :param data: Data to be published.
+        :param priority: Message priority. Only works if ``x-max-priority`` is defined as queue argument.
         :param attempt: Number of attempts made.
         :param retry_count: Amount retries the Publisher tried before sending an error message.
         """
@@ -163,6 +172,7 @@ class Publisher(object):
         try:
             basic_properties_kwargs = {
                 "delivery_mode": PERSISTENT_DELIVERY_MODE,
+                "priority": priority,
             }
 
             channel.basic_publish(

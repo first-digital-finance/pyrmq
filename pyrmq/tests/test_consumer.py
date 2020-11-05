@@ -6,14 +6,19 @@
 
     Full documentation is available at https://pyrmq.readthedocs.io
 """
-
+from random import randint
 from time import sleep
 from unittest.mock import patch
 
 import pytest
 from pika.exceptions import AMQPConnectionError
 from pyrmq import Consumer, Publisher
-from pyrmq.tests.conftest import TEST_EXCHANGE_NAME, TEST_QUEUE_NAME, TEST_ROUTING_KEY
+from pyrmq.tests.conftest import (
+    TEST_EXCHANGE_NAME,
+    TEST_QUEUE_NAME,
+    TEST_ROUTING_KEY,
+    TEST_ARGUMENTS,
+)
 
 
 def wait_for_result(response, expected, tries=0, retry_after=0.6):
@@ -116,3 +121,46 @@ def should_handle_error_when_consuming():
 
             wait_for_result(response, [1])
             consumer.close()
+
+
+def should_get_message_with_higher_priority(priority_session: Publisher):
+    test_data = []
+    for i in range(0, 10):
+        rand_int = randint(0, 255)
+        body = {"test": f"test{rand_int}", "priority": rand_int}
+        priority_session.publish(body, priority=rand_int)
+        test_data.append(body)
+    response = {}
+
+    priority_data = [
+        pri_data
+        for pri_data in test_data
+        if pri_data["priority"] >= TEST_ARGUMENTS["x-max-priority"]
+    ]
+    priority_data.reverse()
+    less_priority_data = sorted(
+        [
+            pri_data
+            for pri_data in test_data
+            if pri_data["priority"] < TEST_ARGUMENTS["x-max-priority"]
+        ],
+        key=lambda x: x["priority"],
+    )
+    priority_sorted_data = [*less_priority_data, *priority_data]
+    last_expected = priority_sorted_data[0]
+
+    def callback(data):
+        expected = priority_sorted_data.pop()
+        assert expected == data
+        response.update(data)
+
+    consumer = Consumer(
+        exchange_name=priority_session.exchange_name,
+        queue_name=priority_session.queue_name,
+        routing_key=priority_session.routing_key,
+        callback=callback,
+    )
+    consumer.start()
+    # Last message received with lowest priority
+    wait_for_result(response, last_expected)
+    consumer.close()
