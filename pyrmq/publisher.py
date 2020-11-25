@@ -9,20 +9,20 @@
 """
 
 import json
+import logging
 import os
 import threading
 import time
-import logging
 from typing import Optional
 
 from pika import (
     BasicProperties,
     BlockingConnection,
-    PlainCredentials,
     ConnectionParameters,
+    PlainCredentials,
 )
 from pika.adapters.blocking_connection import BlockingChannel
-from pika.exceptions import AMQPConnectionError, AMQPChannelError, StreamLostError
+from pika.exceptions import AMQPChannelError, AMQPConnectionError, StreamLostError
 from pika.spec import PERSISTENT_DELIVERY_MODE
 
 CONNECTION_ERRORS = (AMQPConnectionError, ConnectionResetError, StreamLostError)
@@ -50,7 +50,7 @@ class Publisher(object):
         :keyword retry_delay: Seconds between retries.. Default: ``5``
         :keyword error_callback: Callback function to be called when connection_attempts is reached.
         :keyword infinite_retry: Tells PyRMQ to keep on retrying to publish while firing error_callback, if any. Default: ``False``
-        :keyword queue_args: Your queue arguments. Default ``None``
+        :keyword queue_args: Your queue arguments. Default: ``None``
         """
 
         self.exchange_name = exchange_name
@@ -145,12 +145,18 @@ class Publisher(object):
             return self.connect(retry_count=(retry_count + 1))
 
     def publish(
-        self, data: dict, priority: Optional[int] = None, attempt=0, retry_count=1
+        self,
+        data: dict,
+        priority: Optional[int] = None,
+        message_properties: Optional[dict] = None,
+        attempt: int = 0,
+        retry_count: int = 1,
     ) -> None:
         """
         Publishes data to RabbitMQ.
         :param data: Data to be published.
         :param priority: Message priority. Only works if ``x-max-priority`` is defined as queue argument.
+        :param message_properties: Message properties. Default: ``{"delivery_mode": 2}``
         :param attempt: Number of attempts made.
         :param retry_count: Amount retries the Publisher tried before sending an error message.
         """
@@ -170,9 +176,11 @@ class Publisher(object):
         channel = self.channels[ident]
 
         try:
+            message_properties = message_properties or {}
             basic_properties_kwargs = {
                 "delivery_mode": PERSISTENT_DELIVERY_MODE,
                 "priority": priority,
+                **message_properties,
             }
 
             channel.basic_publish(

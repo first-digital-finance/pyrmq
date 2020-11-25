@@ -6,15 +6,12 @@
 
     Full documentation is available at https://pyrmq.readthedocs.io
 """
-from unittest.mock import patch, PropertyMock
+from unittest.mock import PropertyMock, patch
 
 import pytest
-from pika.exceptions import AMQPConnectionError, AMQPChannelError
-from pyrmq.tests.conftest import (
-    TEST_EXCHANGE_NAME,
-    TEST_QUEUE_NAME,
-    TEST_ROUTING_KEY,
-)
+from pika.exceptions import AMQPChannelError, AMQPConnectionError
+
+from pyrmq.tests.conftest import TEST_EXCHANGE_NAME, TEST_QUEUE_NAME, TEST_ROUTING_KEY
 
 
 def should_handle_connection_error_when_connecting():

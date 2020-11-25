@@ -30,7 +30,7 @@ Clone the code from GitHub and run it in a `virtualenv`.
 
 .. code-block:: console
 
-    $ git clone git@github.com:altusgerona/pyrmq.git
+    $ git clone git@github.com:first-digital-finance/pyrmq.git
     $ virtualenv venv --distribute
     $ . venv/bin/activate
     $ python setup.py install
@@ -47,8 +47,8 @@ PyPI
     $ cd pyrmq
     $ virtualenv venv --distribute
     $ . venv/bin/activate
-    $ pip install git+git://github.com/altusgerona/pyrmq.git
+    $ pip install git+git://github.com/first-digital-finance/pyrmq.git
 
 
-.. _GitHub repository: https://github.com/altusgerona/pyrmq
-.. _PyPI: https://pypi.org/project/Cerberus
+.. _GitHub repository: https://github.com/first-digital-finance/pyrmq
+.. _PyPI: https://pypi.org/project/PyRMQ/
