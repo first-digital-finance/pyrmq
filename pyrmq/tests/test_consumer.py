@@ -12,18 +12,20 @@ from unittest.mock import patch
 
 import pytest
 from pika.exceptions import AMQPConnectionError
+
 from pyrmq import Consumer, Publisher
 from pyrmq.tests.conftest import (
+    TEST_ARGUMENTS,
     TEST_EXCHANGE_NAME,
     TEST_QUEUE_NAME,
     TEST_ROUTING_KEY,
-    TEST_ARGUMENTS,
 )
 
 
 def wait_for_result(response, expected, tries=0, retry_after=0.6):
     if response == expected or tries > 5:
         assert response == expected
+        return
     else:
         sleep(retry_after)
         return wait_for_result(response, expected, tries + 1)
@@ -163,4 +165,68 @@ def should_get_message_with_higher_priority(priority_session: Publisher):
     consumer.start()
     # Last message received with lowest priority
     wait_for_result(response, last_expected)
+    consumer.close()
+
+
+def should_republish_message_to_original_queue_with_dlk_retry_enabled(
+    publisher_session: Publisher,
+):
+    body = {"test": "test"}
+
+    publisher_session.publish(
+        body, message_properties={"headers": {"x-origin": "sample"}}
+    )
+
+    response = {"count": 0}
+    error_response = {"count": 0}
+
+    def callback(data: dict):
+        response["count"] = response["count"] + 1
+        raise Exception
+
+    def error_callback(message: str):
+        error_response["count"] = error_response["count"] + 1
+
+    consumer = Consumer(
+        exchange_name=publisher_session.exchange_name,
+        queue_name=publisher_session.queue_name,
+        routing_key=publisher_session.routing_key,
+        callback=callback,
+        is_dlk_retry_enabled=True,
+        retry_delay=1,
+        error_callback=error_callback,
+    )
+    consumer.start()
+    wait_for_result(response, {"count": 3})
+    wait_for_result(error_response, {"count": 3})
+    consumer.close()
+
+
+def should_retry_up_to_max_retries_with_proper_headers_with_dlk_retry_enabled(
+    publisher_session: Publisher,
+):
+    body = {"test": "test"}
+
+    publisher_session.publish(
+        body, message_properties={"headers": {"x-origin": "sample"}}
+    )
+
+    new_response = {"count": 0}
+
+    def callback(data: dict):
+        new_response["count"] = new_response["count"] + 1
+        raise Exception
+
+    consumer = Consumer(
+        exchange_name=publisher_session.exchange_name,
+        queue_name=publisher_session.queue_name,
+        routing_key=publisher_session.routing_key,
+        callback=callback,
+        is_dlk_retry_enabled=True,
+        retry_delay=1,
+        max_retries=1,
+    )
+    consumer.start()
+    with pytest.raises(AssertionError):
+        wait_for_result(new_response, {"count": 3})
     consumer.close()

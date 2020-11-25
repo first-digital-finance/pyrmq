@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-from os.path import join, dirname
-
-from setuptools import setup, find_packages
 import sys
 from collections import OrderedDict
+from os.path import dirname, join
+
+from setuptools import find_packages, setup
 
 DESCRIPTION = "Python with RabbitMQ—simplified so you won't have to."
 LONG_DESCRIPTION = open("README.md").read()
@@ -30,8 +30,8 @@ setup(
     project_urls=OrderedDict(
         (
             ("Documentation", "https://pyrmq.readthedocs.io"),
-            ("Code", "https://github.com/altusgerona/pyrmq"),
-            ("Issue tracker", "https://github.com/altusgerona/pyrmq/issues"),
+            ("Code", "https://github.com/first-digital-finance/pyrmq"),
+            ("Issue tracker", "https://github.com/first-digital-finance/pyrmq/issues"),
         )
     ),
     license="MIT",

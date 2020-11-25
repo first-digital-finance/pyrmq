@@ -1,2 +1,7 @@
 [tool.black]
 py38 = true
+
+[tool.isort]
+# See https://black.readthedocs.io/en/stable/compatible_configs.html for more details.
+profile = "black"
+multi_line_output = 3

@@ -1,19 +1,25 @@
 PyRMQ
 =====
-.. image:: https://img.shields.io/github/workflow/status/altusgerona/pyrmq/Test%20across%20Python%20versions?style=for-the-badge
+.. image:: https://img.shields.io/github/workflow/status/first-digital-finance/pyrmq/Test%20across%20Python%20versions?style=for-the-badge
     :target: https://github.com/first-digital-finance/pyrmq
+
+.. image:: https://img.shields.io/pypi/v/pyrmq?style=for-the-badge
+    :target: https://pypi.org/project/PyRMQ/
+
+.. image:: https://readthedocs.org/projects/pyrmq/badge/?version=latest&style=for-the-badge
+    :target: https://pyrmq.readthedocs.io
 
 .. image:: https://img.shields.io/pypi/pyversions/pyrmq?style=for-the-badge
     :target: https://pypi.org/project/PyRMQ/
-
-.. image:: https://img.shields.io/codecov/c/github/first-digital-finance/pyrmq/master.svg?style=for-the-badge
-    :target: https://codecov.io/gh/first-digital-finance/pyrmq
 
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg?longCache=true&style=for-the-badge
     :target: https://altusgerona.mit-license.org
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg?longCache=true&style=for-the-badge
     :target: https://github.com/psf/black
+
+.. image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=for-the-badge&labelColor=ef8336)](https://pycqa.github.io/isort/
+    :target: https://github.com/PyCQA/isort
 
 Python with RabbitMQ—simplified so you won't have to.
 
@@ -22,8 +28,8 @@ Features
 Stop worrying about boilerplating and implementing retry logic on your queues. PyRMQ already
 does it for you.
 
-- Use out-of-the-box and thread-safe :class:`~pyrmq.Consumer` and :class:`~pyrmq.Publisher` classes created from `pika`_ for your projects and tests.
-- Built-in retry logic for connecting, consuming, and publishing. Can also handle infinite retries.
+- Use out-of-the-box :class:`~pyrmq.Consumer` and :class:`~pyrmq.Publisher` classes created from `pika`_ for your projects and tests.
+- Custom DLX-DLK-based retry logic for message consumption.
 - Message priorities
 - Works with Python 3.
 - Production ready
@@ -97,6 +103,36 @@ able to receive the published data.
 
     consumer.start()
 
+
+DLX-DLK Retry Logic
+-------------------
+What if you wanted to retry a failure on a consumed message? PyRMQ offers a custom solution that keeps your message
+in queues while retrying in an `exponential backoff`_ fashion.
+
+This approach uses `dead letter exchanges and queues`_ to republish a message to your
+original queue once it has expired. PyRMQ creates this "retry" queue for you with the default naming convention of
+appending your original queue with `.retry`.
+
+.. code-block:: python
+
+    from pyrmq import Consumer
+
+    def callback(data):
+        print(f"Received {data}!")
+        raise Exception
+
+    consumer = Consumer(
+        exchange_name="exchange_name",
+        queue_name="queue_name",
+        routing_key="routing_key",
+        callback=callback,
+        is_dlk_retry_enabled=True,
+    )
+    consumer.start()
+
+This will start a loop of passing your message between the original queue and the retry queue until it reaches
+the default number of ``max_retries``.
+
 User Guide
 ----------
 .. toctree::
@@ -109,3 +145,5 @@ User Guide
 .. _default initialization settings: https://hub.docker.com/_/rabbitmq)
 .. _PyPI: https://pypi.org/project/PyRMQ/
 .. _here: https://www.rabbitmq.com/priority.html
+.. _exponential backoff: https://en.wikipedia.org/wiki/Exponential_backoff
+.. _dead letter exchanges and queues: https://www.rabbitmq.com/dlx.html
