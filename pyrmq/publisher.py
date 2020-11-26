@@ -47,7 +47,7 @@ class Publisher(object):
         :keyword username: Your RabbitMQ username. Default: ``"guest"``
         :keyword password: Your RabbitMQ password. Default: ``"guest"``
         :keyword connection_attempts: How many times should PyRMQ try?. Default: ``3``
-        :keyword retry_delay: Seconds between retries.. Default: ``5``
+        :keyword retry_delay: Seconds between retries. Default: ``5``
         :keyword error_callback: Callback function to be called when connection_attempts is reached.
         :keyword infinite_retry: Tells PyRMQ to keep on retrying to publish while firing error_callback, if any. Default: ``False``
         :keyword queue_args: Your queue arguments. Default: ``None``

@@ -49,7 +49,7 @@ class Consumer(object):
         :keyword password: Your RabbitMQ password. Default: ``"guest"``
         :keyword connection_attempts: How many times should PyRMQ try? Default: ``3``
         :keyword is_dlk_retry_enabled: Flag to enable DLK-based retry logic of consumed messages. Default: ``False``
-        :keyword retry_delay: Seconds between retries.. Default: ``5``
+        :keyword retry_delay: Seconds between retries. Default: ``5``
         :keyword retry_backoff_base: Exponential backoff base in seconds. Default: ``2``
         :keyword retry_queue_suffix: The suffix that will be appended to the ``queue_name`` to act as the name of the retry_queue. Default: ``retry``
         :keyword max_retries: Number of maximum retries for DLK retry logic. Default: ``20``
