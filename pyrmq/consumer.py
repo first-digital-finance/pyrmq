@@ -38,8 +38,6 @@ class Consumer(object):
         callback: Callable,
         **kwargs,
     ):
-        from pyrmq import Publisher
-
         """
         :param exchange_name: Your exchange name.
         :param queue_name: Your queue name.
@@ -56,6 +54,9 @@ class Consumer(object):
         :keyword retry_queue_suffix: The suffix that will be appended to the ``queue_name`` to act as the name of the retry_queue. Default: ``retry``
         :keyword max_retries: Number of maximum retries for DLK retry logic. Default: ``20``
         """
+
+        from pyrmq import Publisher
+
         self.connection = None
         self.exchange_name = exchange_name
         self.queue_name = queue_name
