@@ -11,7 +11,6 @@
 import json
 import logging
 import os
-import threading
 import time
 from typing import Optional
 
@@ -37,11 +36,19 @@ class Publisher(object):
     queue declares and bindings plus retry logic built for its connection and publishing.
     """
 
-    def __init__(self, exchange_name: str, queue_name: str, routing_key: str, **kwargs):
+    def __init__(
+        self,
+        exchange_name: str,
+        queue_name: Optional[str] = "",
+        routing_key: Optional[str] = "",
+        exchange_type: Optional[str] = "direct",
+        **kwargs,
+    ):
         """
         :param exchange_name: Your exchange name.
         :param queue_name: Your queue name.
         :param routing_key: Your queue name.
+        :param exchange_type: Exchange type to declare. Default: ``"direct"``
         :keyword host: Your RabbitMQ host. Checks env var ``RABBITMQ_HOST``. Default: ``"localhost"``
         :keyword port: Your RabbitMQ port. Checks env var ``RABBITMQ_PORT``. Default: ``5672``
         :keyword username: Your RabbitMQ username. Default: ``"guest"``
@@ -56,19 +63,18 @@ class Publisher(object):
         self.exchange_name = exchange_name
         self.queue_name = queue_name
         self.routing_key = routing_key
+        self.exchange_type = exchange_type
         self.host = kwargs.get("host") or os.getenv("RABBITMQ_HOST") or "localhost"
         self.port = kwargs.get("port") or os.getenv("RABBITMQ_PORT") or 5672
-        self.username = kwargs.get("username") or "guest"
-        self.password = kwargs.get("password") or "guest"
-        self.connection_attempts = kwargs.get("connection_attempts") or 3
-        self.retry_delay = kwargs.get("retry_delay") or 5
-        self.retry_backoff_base = kwargs.get("retry_backoff_base") or 2
-        self.retry_backoff_constant_secs = (
-            kwargs.get("retry_backoff_constant_secs") or 5
-        )
+        self.username = kwargs.get("username", "guest")
+        self.password = kwargs.get("password", "guest")
+        self.connection_attempts = kwargs.get("connection_attempts", 3)
+        self.retry_delay = kwargs.get("retry_delay", 5)
+        self.retry_backoff_base = kwargs.get("retry_backoff_base", 2)
+        self.retry_backoff_constant_secs = kwargs.get("retry_backoff_constant_secs", 5)
         self.error_callback = kwargs.get("error_callback")
-        self.infinite_retry = kwargs.get("infinite_retry") or False
-        self.queue_args = kwargs.get("queue_args") or None
+        self.infinite_retry = kwargs.get("infinite_retry", False)
+        self.queue_args = kwargs.get("queue_args")
 
         self.connection_parameters = ConnectionParameters(
             host=self.host,
@@ -79,7 +85,6 @@ class Publisher(object):
         )
 
         self.connections = {}
-        self.channels = {}
 
     def __send_reconnection_error_message(self, retry_count, error) -> None:
         """
@@ -108,7 +113,13 @@ class Publisher(object):
         Declare and a bind a channel to a queue.
         :param channel: pika Channel
         """
-        channel.exchange_declare(exchange=self.exchange_name, durable=True)
+        channel.exchange_declare(
+            exchange=self.exchange_name, durable=True, exchange_type=self.exchange_type
+        )
+
+        if not self.queue_name or not self.routing_key:
+            return
+
         channel.queue_declare(
             queue=self.queue_name, arguments=self.queue_args, durable=True
         )
@@ -118,9 +129,8 @@ class Publisher(object):
             routing_key=self.routing_key,
             arguments=self.queue_args,
         )
-        channel.confirm_delivery()
 
-    def connect(self, retry_count=1) -> (BlockingConnection, BlockingChannel):
+    def connect(self, retry_count=1) -> BlockingChannel:
         """
         Creates pika's ``BlockingConnection`` and initializes queue bindings.
         :param retry_count: Amount retries the Publisher tried before sending an error message.
@@ -128,10 +138,11 @@ class Publisher(object):
         try:
             connection = self.__create_connection()
             channel = connection.channel()
+            channel.confirm_delivery()
 
             self.declare_queue(channel)
 
-            return connection, channel
+            return channel
 
         except CONNECTION_ERRORS as error:
             self.__send_reconnection_error_message(
@@ -160,20 +171,7 @@ class Publisher(object):
         :param attempt: Number of attempts made.
         :param retry_count: Amount retries the Publisher tried before sending an error message.
         """
-        worker_id = os.getpid()
-        ident = f"{worker_id}-{threading.currentThread().ident}"
-
-        if worker_id not in self.connections:
-            connection, channel = self.connect()
-            self.connections[worker_id] = connection
-            self.channels[ident] = channel
-
-        if ident not in self.channels:
-            channel = self.connections[worker_id].channel()
-            self.declare_queue(channel)
-            self.channels[ident] = channel
-
-        channel = self.channels[ident]
+        channel = self.connect()
 
         try:
             message_properties = message_properties or {}
@@ -198,10 +196,6 @@ class Publisher(object):
                     raise error
 
             time.sleep(self.retry_delay)
-
-            connection, channel = self.connect()
-            self.connections[worker_id] = connection
-            self.channels[ident] = channel
 
             self.publish(data, attempt=attempt, retry_count=(retry_count + 1))
 
