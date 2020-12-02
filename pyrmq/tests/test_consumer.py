@@ -22,13 +22,13 @@ from pyrmq.tests.conftest import (
 )
 
 
-def wait_for_result(response, expected, tries=0, retry_after=0.6):
+def assert_consumed_message(response, expected, tries=0, retry_after=0.6):
     if response == expected or tries > 5:
         assert response == expected
         return
     else:
         sleep(retry_after)
-        return wait_for_result(response, expected, tries + 1)
+        return assert_consumed_message(response, expected, tries + 1)
 
 
 def should_handle_exception_from_callback(publisher_session: Publisher):
@@ -48,7 +48,7 @@ def should_handle_exception_from_callback(publisher_session: Publisher):
         callback=callback,
     )
     consumer.start()
-    wait_for_result(response, body)
+    assert_consumed_message(response, body)
     consumer.close()
 
 
@@ -121,7 +121,7 @@ def should_handle_error_when_consuming():
             )
             consumer.start()
 
-            wait_for_result(response, [1])
+            assert_consumed_message(response, [1])
             consumer.close()
 
 
@@ -164,7 +164,7 @@ def should_get_message_with_higher_priority(priority_session: Publisher):
     )
     consumer.start()
     # Last message received with lowest priority
-    wait_for_result(response, last_expected)
+    assert_consumed_message(response, last_expected)
     consumer.close()
 
 
@@ -197,8 +197,8 @@ def should_republish_message_to_original_queue_with_dlk_retry_enabled(
         error_callback=error_callback,
     )
     consumer.start()
-    wait_for_result(response, {"count": 3})
-    wait_for_result(error_response, {"count": 3})
+    assert_consumed_message(response, {"count": 3})
+    assert_consumed_message(error_response, {"count": 3})
     consumer.close()
 
 
@@ -228,5 +228,5 @@ def should_retry_up_to_max_retries_with_proper_headers_with_dlk_retry_enabled(
     )
     consumer.start()
     with pytest.raises(AssertionError):
-        wait_for_result(new_response, {"count": 3})
+        assert_consumed_message(new_response, {"count": 3})
     consumer.close()
