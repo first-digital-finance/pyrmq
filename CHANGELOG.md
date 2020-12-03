@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/first-digital-finance/pyrmq/compare/v1.3.0...v1.4.0) (2020-12-03)
+
+
+### Features
+
+* allow different exchange types ([c6df4e0](https://github.com/first-digital-finance/pyrmq/commit/c6df4e0210133b22eab0054f44f089d5c5da2c38))
+
 # [1.3.0](https://github.com/first-digital-finance/pyrmq/compare/v1.2.0...v1.3.0) (2020-11-26)
 
 
