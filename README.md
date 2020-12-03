@@ -110,6 +110,28 @@ consumer.start()
 This will start a loop of passing your message between the original queue and the retry queue until it reaches
 the default number of `max_retries`.
 
+#### Using other exchange types
+You can use another exchange type just by simply specifying it in the Publisher class. The default is
+`direct`. 
+
+```python
+from pyrmq import Publisher
+
+queue_args = {"routing.sample": "sample", "x-match": "all"}
+
+publisher = Publisher(
+    exchange_name="exchange_name",
+    exchange_type="headers",
+    queue_args=queue_args
+)
+
+message_properties = {"headers": {"routing.sample": "sample"}}
+publisher.publish({"pyrmq": "My first message"}, message_properties=message_properties)
+```
+
+This is an example of how to publish to a headers exchange that will get routed
+based on its headers.
+
 ## Documentation
 Visit https://pyrmq.readthedocs.io for the most up-to-date documentation.
 
