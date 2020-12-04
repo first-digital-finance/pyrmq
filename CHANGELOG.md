@@ -1,3 +1,11 @@
+# [1.5.0](https://github.com/first-digital-finance/pyrmq/compare/v1.4.0...v1.5.0) (2020-12-04)
+
+
+### Features
+
+* **consumer:** Consumer class now declares queues ([67e1bf7](https://github.com/first-digital-finance/pyrmq/commit/67e1bf7772eb1e94d60a028bf3e42b1e57ad7c7f))
+* add support for Python 3.9 ([09a884c](https://github.com/first-digital-finance/pyrmq/commit/09a884c0a84effeaa314ec4fb152b789a5936b14))
+
 # [1.4.0](https://github.com/first-digital-finance/pyrmq/compare/v1.3.0...v1.4.0) (2020-12-03)
 
 
