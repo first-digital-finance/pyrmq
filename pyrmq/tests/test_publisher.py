@@ -41,8 +41,7 @@ def should_handle_connection_error_when_connecting():
             ):
                 publisher.publish({})
 
-    # Should not sleep since infinite_retry is set to False
-    assert sleep.call_count == 0
+    assert sleep.call_count == 2
 
 
 def should_handle_connection_error_when_publishing():
@@ -171,6 +170,7 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
         exchange_name=exchange_headers_name,
         queue_name="first_queue",
         routing_key="first_queue",
+        queue_args=first_queue_args,
         callback=first_callback,
     )
     first_consumer.start()
@@ -186,6 +186,7 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
         exchange_name=exchange_headers_name,
         queue_name="second_queue",
         routing_key="second_queue",
+        queue_args=second_queue_args,
         callback=second_callback,
     )
     second_consumer.start()
