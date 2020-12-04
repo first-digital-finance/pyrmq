@@ -53,6 +53,7 @@ class Consumer(object):
         :keyword retry_backoff_base: Exponential backoff base in seconds. Default: ``2``
         :keyword retry_queue_suffix: The suffix that will be appended to the ``queue_name`` to act as the name of the retry_queue. Default: ``retry``
         :keyword max_retries: Number of maximum retries for DLK retry logic. Default: ``20``
+        :keyword queue_args: Your queue arguments. Default: ``None``
         """
 
         from pyrmq import Publisher
@@ -74,6 +75,7 @@ class Consumer(object):
         self.max_retries = kwargs.get("max_retries", 20)
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry", False)
+        self.queue_args = kwargs.get("queue_args")
         self.channel = None
         self.thread = None
 
@@ -102,8 +104,23 @@ class Consumer(object):
                 },
             )
 
+    def declare_queue(self) -> None:
+        """
+        Declare and a bind a channel to a queue.
+        """
+        self.channel.queue_declare(
+            queue=self.queue_name, arguments=self.queue_args, durable=True
+        )
+        self.channel.queue_bind(
+            queue=self.queue_name,
+            exchange=self.exchange_name,
+            routing_key=self.routing_key,
+            arguments=self.queue_args,
+        )
+
     def start(self):
         self.connect()
+        self.declare_queue()
 
         self.thread = Thread(target=self.consume)
         self.thread.setDaemon(True)
