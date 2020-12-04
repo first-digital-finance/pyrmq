@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/first-digital-finance/pyrmq/compare/v1.5.0...v1.5.1) (2020-12-04)
+
+
+### Bug Fixes
+
+* relax setup.py package requirements ([615e87f](https://github.com/first-digital-finance/pyrmq/commit/615e87fc99660ad86e5e8494f6ebeb9255b84615))
+
 # [1.5.0](https://github.com/first-digital-finance/pyrmq/compare/v1.4.0...v1.5.0) (2020-12-04)
 
 
