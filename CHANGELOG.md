@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/first-digital-finance/pyrmq/compare/v1.5.2...v1.5.3) (2020-12-11)
+
+
+### Bug Fixes
+
+* **consumer:** allow the consumer to specify its exchange type ([1b7a5b6](https://github.com/first-digital-finance/pyrmq/commit/1b7a5b683e10438a174204b7d28792e7f4c36c7f))
+
 ## [1.5.2](https://github.com/first-digital-finance/pyrmq/compare/v1.5.1...v1.5.2) (2020-12-11)
 
 
