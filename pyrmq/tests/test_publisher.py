@@ -171,6 +171,7 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
         queue_name="first_queue",
         routing_key="first_queue",
         queue_args=first_queue_args,
+        exchange_type="headers",
         callback=first_callback,
     )
     first_consumer.start()
@@ -187,6 +188,7 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
         queue_name="second_queue",
         routing_key="second_queue",
         queue_args=second_queue_args,
+        exchange_type="headers",
         callback=second_callback,
     )
     second_consumer.start()
