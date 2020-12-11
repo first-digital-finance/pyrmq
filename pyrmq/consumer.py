@@ -82,7 +82,7 @@ class Consumer(object):
         self.connection_parameters = ConnectionParameters(
             host=self.host,
             port=self.port,
-            credentials=PlainCredentials(self.username, self.username),
+            credentials=PlainCredentials(self.username, self.password),
             connection_attempts=self.connection_attempts,
             retry_delay=self.retry_delay,
         )
