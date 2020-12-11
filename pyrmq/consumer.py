@@ -14,7 +14,7 @@ import os
 import time
 from datetime import datetime, timedelta
 from threading import Thread
-from typing import Callable, Union
+from typing import Callable, Optional, Union
 
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.exceptions import AMQPConnectionError, ChannelClosedByBroker
@@ -36,6 +36,7 @@ class Consumer(object):
         queue_name: str,
         routing_key: str,
         callback: Callable,
+        exchange_type: Optional[str] = "direct",
         **kwargs,
     ):
         """
@@ -62,6 +63,7 @@ class Consumer(object):
         self.exchange_name = exchange_name
         self.queue_name = queue_name
         self.routing_key = routing_key
+        self.exchange_type = exchange_type
         self.message_received_callback = callback
         self.host = kwargs.get("host") or os.getenv("RABBITMQ_HOST") or "localhost"
         self.port = kwargs.get("port") or os.getenv("RABBITMQ_PORT") or 5672
@@ -108,6 +110,10 @@ class Consumer(object):
         """
         Declare and a bind a channel to a queue.
         """
+        self.channel.exchange_declare(
+            exchange=self.exchange_name, durable=True, exchange_type=self.exchange_type
+        )
+
         self.channel.queue_declare(
             queue=self.queue_name, arguments=self.queue_args, durable=True
         )
