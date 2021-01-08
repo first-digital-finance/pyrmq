@@ -237,7 +237,9 @@ class Consumer(object):
         try:
             logger.debug("Received message from queue")
 
-            self.message_received_callback(data)
+            self.message_received_callback(
+                data, channel=channel, method=method, properties=properties
+            )
 
         except Exception as error:
             if self.is_dlk_retry_enabled:

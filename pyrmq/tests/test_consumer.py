@@ -37,7 +37,7 @@ def should_handle_exception_from_callback(publisher_session: Publisher):
 
     response = {}
 
-    def callback(data):
+    def callback(data, **kwargs):
         response.update(data)
         raise Exception
 
@@ -101,11 +101,15 @@ def should_handle_error_when_connecting_with_infinite_retry(publisher_session):
     assert sleep_call.call_count == 3
 
 
-def should_handle_error_when_consuming():
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
+def should_handle_error_when_consuming(publisher_session: Publisher):
     response = []
 
     def error_callback(*args):
         response.append(1)
+
+    def callback(data, **kwargs):
+        pass  # pragma no cover
 
     with patch(
         "pika.adapters.blocking_connection.BlockingChannel.basic_consume",
@@ -116,7 +120,7 @@ def should_handle_error_when_consuming():
                 exchange_name=TEST_EXCHANGE_NAME,
                 queue_name=TEST_QUEUE_NAME,
                 routing_key=TEST_ROUTING_KEY,
-                callback=lambda x: x,
+                callback=callback,
                 error_callback=error_callback,
             )
             consumer.start()
@@ -151,7 +155,7 @@ def should_get_message_with_higher_priority(priority_session: Publisher):
     priority_sorted_data = [*less_priority_data, *priority_data]
     last_expected = priority_sorted_data[0]
 
-    def callback(data):
+    def callback(data, **kwargs):
         expected = priority_sorted_data.pop()
         assert expected == data
         response.update(data)
@@ -181,7 +185,7 @@ def should_republish_message_to_original_queue_with_dlk_retry_enabled(
     response = {"count": 0}
     error_response = {"count": 0}
 
-    def callback(data: dict):
+    def callback(data: dict, **kwargs):
         response["count"] = response["count"] + 1
         raise Exception
 
@@ -214,7 +218,7 @@ def should_retry_up_to_max_retries_with_proper_headers_with_dlk_retry_enabled(
 
     new_response = {"count": 0}
 
-    def callback(data: dict):
+    def callback(data: dict, **kwargs):
         new_response["count"] = new_response["count"] + 1
         raise Exception
 

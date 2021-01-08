@@ -163,7 +163,7 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
 
     first_response = {"count": 0}
 
-    def first_callback(data: Dict):
+    def first_callback(data: Dict, **kwargs):
         first_response["count"] += 1
 
     first_consumer = Consumer(
@@ -180,7 +180,7 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
 
     second_response = {"count": 0}
 
-    def second_callback(data: Dict):
+    def second_callback(data: Dict, **kwargs):
         second_response["count"] += 1
 
     second_consumer = Consumer(
