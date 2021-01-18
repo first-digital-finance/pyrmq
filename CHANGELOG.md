@@ -1,3 +1,16 @@
+# [2.0.0](https://github.com/first-digital-finance/pyrmq/compare/v1.5.3...v2.0.0) (2021-01-18)
+
+
+### Features
+
+* **consumer:** add channel, method, and properties to the specified callback as kwargs ([7252421](https://github.com/first-digital-finance/pyrmq/commit/72524218ccb61ab7f1f02ed949690d10a4cbed77))
+
+
+### BREAKING CHANGES
+
+* **consumer:** specified Consumer callback methods should accept
+`channel`, `method`, and `properties` as additional keyword arguments
+
 ## [1.5.3](https://github.com/first-digital-finance/pyrmq/compare/v1.5.2...v1.5.3) (2020-12-11)
 
 
