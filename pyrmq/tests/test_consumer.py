@@ -235,3 +235,57 @@ def should_retry_up_to_max_retries_with_proper_headers_with_dlk_retry_enabled(
     with pytest.raises(AssertionError):
         assert_consumed_message(new_response, {"count": 3})
     consumer.close()
+
+
+def assert_consumed_infinite_loop(response, expected, tries=0, retry_after=0.6):
+    if response == expected or tries > 5:
+        assert response["count"] > expected["count"]
+        return
+    else:
+        sleep(retry_after)
+        return assert_consumed_infinite_loop(response, expected, tries + 1)
+
+
+def should_nack_message_when_callback_method_returns_false(
+    publisher_session: Publisher,
+) -> None:
+    body = {"test": "test"}
+
+    publisher_session.publish(
+        body, message_properties={"headers": {"x-origin": "sample"}}
+    )
+
+    response = {"count": 0}
+
+    def callback_that_should_nack(data: dict, **kwargs):
+        response["count"] = response["count"] + 1
+        return False
+
+    consumer = Consumer(
+        exchange_name=publisher_session.exchange_name,
+        queue_name=publisher_session.queue_name,
+        routing_key=publisher_session.routing_key,
+        callback=callback_that_should_nack,
+    )
+    consumer.start()
+    assert_consumed_infinite_loop(response, {"count": 1})
+    consumer.close()
+
+    # Consumer should still be able to consume the same message
+    # without publishing again if nack is successful.
+
+    new_response = {"count": 0}
+
+    def callback_that_should_ack(data: dict, **kwargs):
+        new_response["count"] = new_response["count"] + 1
+
+    consumer = Consumer(
+        exchange_name=publisher_session.exchange_name,
+        queue_name=publisher_session.queue_name,
+        routing_key=publisher_session.routing_key,
+        callback=callback_that_should_ack,
+    )
+
+    consumer.start()
+    assert_consumed_infinite_loop(response, {"count": 1})
+    consumer.close()
