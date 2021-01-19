@@ -55,6 +55,7 @@ class Consumer(object):
         :keyword retry_queue_suffix: The suffix that will be appended to the ``queue_name`` to act as the name of the retry_queue. Default: ``retry``
         :keyword max_retries: Number of maximum retries for DLK retry logic. Default: ``20``
         :keyword queue_args: Your queue arguments. Default: ``None``
+        :keyword auto_ack: Flag whether to ack or nack the consumed message regardless of its outcome. Default: ``True``
         """
 
         from pyrmq import Publisher
@@ -78,6 +79,7 @@ class Consumer(object):
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry", False)
         self.queue_args = kwargs.get("queue_args")
+        self.auto_ack = kwargs.get("auto_ack", True)
         self.channel = None
         self.thread = None
 
@@ -234,10 +236,12 @@ class Consumer(object):
 
         data = json.loads(data)
 
+        auto_ack = None
+
         try:
             logger.debug("Received message from queue")
 
-            self.message_received_callback(
+            auto_ack = self.message_received_callback(
                 data, channel=channel, method=method, properties=properties
             )
 
@@ -247,7 +251,11 @@ class Consumer(object):
             else:
                 logger.exception(error)
 
-        channel.basic_ack(delivery_tag=method.delivery_tag)
+        if auto_ack or (auto_ack is None and self.auto_ack):
+            channel.basic_ack(delivery_tag=method.delivery_tag)
+
+        else:
+            channel.basic_nack(delivery_tag=method.delivery_tag)
 
     def connect(self, retry_count=1) -> None:
         """
