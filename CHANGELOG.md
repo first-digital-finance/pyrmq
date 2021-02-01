@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/first-digital-finance/pyrmq/compare/v2.0.0...v2.1.0) (2021-02-01)
+
+
+### Features
+
+* **consumer:** add a new option ([387d1e8](https://github.com/first-digital-finance/pyrmq/commit/387d1e8de25b64db020d6c1adc8d7a4a41c9e539))
+
 # [2.0.0](https://github.com/first-digital-finance/pyrmq/compare/v1.5.3...v2.0.0) (2021-01-18)
 
 
