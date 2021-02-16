@@ -6,6 +6,7 @@
 
     Full documentation is available at https://pyrmq.readthedocs.io
 """
+import logging
 from random import randint
 from time import sleep
 from unittest.mock import patch
@@ -73,6 +74,25 @@ def should_handle_error_when_connecting(publisher_session):
                 )
                 consumer.start()
                 # No need to close since thread starts after successful connection
+
+
+def should_log_error_when_error_callback_is_none(publisher_session, caplog):
+    with patch(
+        "pika.adapters.blocking_connection.BlockingConnection.__init__",
+        side_effect=AMQPConnectionError,
+    ):
+        with patch("time.sleep"):
+            with pytest.raises(AMQPConnectionError):
+                consumer = Consumer(
+                    exchange_name=publisher_session.exchange_name,
+                    queue_name=publisher_session.queue_name,
+                    routing_key=publisher_session.routing_key,
+                    callback=lambda x: x,
+                )
+                consumer.start()
+                # No need to close since thread starts after successful connection
+
+    assert caplog.record_tuples == [("pyrmq", logging.ERROR, "")]
 
 
 def should_handle_error_when_connecting_with_infinite_retry(publisher_session):
