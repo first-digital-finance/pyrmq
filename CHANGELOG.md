@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/first-digital-finance/pyrmq/compare/v2.1.0...v2.1.1) (2021-02-16)
+
+
+### Bug Fixes
+
+* log an exception only if error_callback field is not initialized ([#35](https://github.com/first-digital-finance/pyrmq/issues/35)) ([b2bebd7](https://github.com/first-digital-finance/pyrmq/commit/b2bebd7f3a868996cd1adcd11d701319c417b4c8))
+
 # [2.1.0](https://github.com/first-digital-finance/pyrmq/compare/v2.0.0...v2.1.0) (2021-02-01)
 
 
