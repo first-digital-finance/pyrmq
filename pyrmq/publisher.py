@@ -97,10 +97,11 @@ class Publisher(object):
             f"but still failed."
             f"\n{repr(error)}"
         )
-        logger.exception(error)
 
         if self.error_callback:
             self.error_callback(message)
+        else:
+            logger.exception(error)
 
     def __create_connection(self) -> BlockingConnection:
         """

@@ -151,8 +151,8 @@ class Consumer(object):
         )
         if self.error_callback:
             self.error_callback(message)
-
-        logger.exception(error)
+        else:
+            logger.exception(error)
 
     def __send_consume_error_message(self, retry_count: int, error: Exception) -> None:
         """
