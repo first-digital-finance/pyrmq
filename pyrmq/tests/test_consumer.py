@@ -15,6 +15,7 @@ import pytest
 from pika.exceptions import AMQPConnectionError
 
 from pyrmq import Consumer, Publisher
+from pyrmq.consumer import CONNECT_ERROR, CONSUME_ERROR
 from pyrmq.tests.conftest import (
     TEST_EXCHANGE_NAME,
     TEST_PRIORITY_ARGUMENTS,
@@ -38,6 +39,9 @@ def should_handle_exception_from_callback(publisher_session: Publisher):
 
     response = {}
 
+    def error_callback(*args, **kwargs):
+        assert kwargs["error_type"] == CONSUME_ERROR
+
     def callback(data, **kwargs):
         response.update(data)
         raise Exception
@@ -47,6 +51,7 @@ def should_handle_exception_from_callback(publisher_session: Publisher):
         queue_name=publisher_session.queue_name,
         routing_key=publisher_session.routing_key,
         callback=callback,
+        error_callback=error_callback,
     )
     consumer.start()
     assert_consumed_message(response, body)
@@ -56,7 +61,8 @@ def should_handle_exception_from_callback(publisher_session: Publisher):
 def should_handle_error_when_connecting(publisher_session):
     response = []
 
-    def error_callback(*args):
+    def error_callback(*args, **kwargs):
+        assert kwargs["error_type"] == CONNECT_ERROR
         response.append(1)
 
     with patch(
@@ -95,10 +101,33 @@ def should_log_error_when_error_callback_is_none(publisher_session, caplog):
     assert caplog.record_tuples == [("pyrmq", logging.ERROR, "")]
 
 
+def should_log_error_when_error_callback_fails(publisher_session, caplog):
+    def error_callback(*args, **kwargs):
+        raise Exception
+
+    with patch(
+        "pika.adapters.blocking_connection.BlockingConnection.__init__",
+        side_effect=AMQPConnectionError,
+    ):
+        with patch("time.sleep"):
+            with pytest.raises(AMQPConnectionError):
+                consumer = Consumer(
+                    exchange_name=publisher_session.exchange_name,
+                    queue_name=publisher_session.queue_name,
+                    routing_key=publisher_session.routing_key,
+                    callback=lambda x: x,
+                    error_callback=error_callback,
+                )
+                consumer.start()
+                # No need to close since thread starts after successful connection
+
+    assert caplog.record_tuples == [("pyrmq", logging.ERROR, "")]
+
+
 def should_handle_error_when_connecting_with_infinite_retry(publisher_session):
     response = []
 
-    def error_callback(*args):
+    def error_callback(*args, **kwargs):
         response.append(1)
 
     with patch(
@@ -125,7 +154,7 @@ def should_handle_error_when_connecting_with_infinite_retry(publisher_session):
 def should_handle_error_when_consuming(publisher_session: Publisher):
     response = []
 
-    def error_callback(*args):
+    def error_callback(*args, **kwargs):
         response.append(1)
 
     def callback(data, **kwargs):
@@ -151,6 +180,7 @@ def should_handle_error_when_consuming(publisher_session: Publisher):
 
 def should_get_message_with_higher_priority(priority_session: Publisher):
     test_data = []
+
     for i in range(0, 10):
         rand_int = randint(0, 255)
         body = {"test": f"test{rand_int}", "priority": rand_int}
@@ -209,7 +239,7 @@ def should_republish_message_to_original_queue_with_dlk_retry_enabled(
         response["count"] = response["count"] + 1
         raise Exception
 
-    def error_callback(message: str):
+    def error_callback(*args, **kwargs):
         error_response["count"] = error_response["count"] + 1
 
     consumer = Consumer(
@@ -252,8 +282,10 @@ def should_retry_up_to_max_retries_with_proper_headers_with_dlk_retry_enabled(
         max_retries=1,
     )
     consumer.start()
+
     with pytest.raises(AssertionError):
         assert_consumed_message(new_response, {"count": 3})
+
     consumer.close()
 
 
@@ -261,6 +293,7 @@ def assert_consumed_infinite_loop(response, expected, tries=0, retry_after=0.6):
     if response == expected or tries > 5:
         assert response["count"] > expected["count"]
         return
+
     else:
         sleep(retry_after)
         return assert_consumed_infinite_loop(response, expected, tries + 1)

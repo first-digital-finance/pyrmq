@@ -13,6 +13,7 @@ import pytest
 from pika.exceptions import AMQPChannelError, AMQPConnectionError
 
 from pyrmq import Consumer, Publisher
+from pyrmq.publisher import CONNECT_ERROR
 from pyrmq.tests.conftest import TEST_EXCHANGE_NAME, TEST_QUEUE_NAME, TEST_ROUTING_KEY
 from pyrmq.tests.test_consumer import assert_consumed_message
 
@@ -45,8 +46,8 @@ def should_handle_connection_error_when_connecting():
 
 
 def should_handle_connection_error_when_publishing():
-    def error_callback(error):
-        print("error", error)
+    def error_callback(*args, **kwargs):
+        assert kwargs["error_type"] == CONNECT_ERROR
 
     publisher = Publisher(
         exchange_name="incorrect_exchange_name",
@@ -55,6 +56,7 @@ def should_handle_connection_error_when_publishing():
         error_callback=error_callback,
     )
     body = {"sample_body": "value"}
+
     with patch(
         "pika.adapters.blocking_connection.BlockingChannel.basic_publish",
         side_effect=AMQPConnectionError,
@@ -68,6 +70,7 @@ def should_handle_connection_error_when_publishing():
 
 def should_handle_channel_error_when_publishing(publisher_session):
     body = {"sample_body": "value"}
+
     with patch(
         "pika.adapters.blocking_connection.BlockingChannel.basic_publish",
         side_effect=AMQPChannelError,
@@ -79,16 +82,35 @@ def should_handle_channel_error_when_publishing(publisher_session):
     assert sleep.call_count == publisher_session.connection_attempts - 1
 
 
-def should_handle_infinite_retry():
-    def error_callback(error):
-        print("error", error)
+def should_handle_exception_from_error_callback():
+    def error_callback(*args, **kwargs):
+        raise Exception
 
     publisher = Publisher(
         exchange_name="incorrect_exchange_name",
         queue_name="incorrect_queue_name",
         routing_key="incorrect_routing_key",
-        infinite_retry=True,
         error_callback=error_callback,
+    )
+    body = {"sample_body": "value"}
+
+    with patch(
+        "pika.adapters.blocking_connection.BlockingChannel.basic_publish",
+        side_effect=AMQPConnectionError,
+    ):
+        with patch("time.sleep") as sleep:
+            with pytest.raises(AMQPConnectionError):
+                publisher.publish(body)
+
+    assert sleep.call_count == publisher.connection_attempts - 1
+
+
+def should_handle_infinite_retry():
+    publisher = Publisher(
+        exchange_name="incorrect_exchange_name",
+        queue_name="incorrect_queue_name",
+        routing_key="incorrect_routing_key",
+        infinite_retry=True,
     )
 
     with patch(

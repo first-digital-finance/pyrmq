@@ -19,8 +19,11 @@ from typing import Callable, Optional, Union
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.exceptions import AMQPConnectionError, ChannelClosedByBroker
 
-logger = logging.getLogger("pyrmq")
 CONNECTION_ERRORS = (AMQPConnectionError, ConnectionResetError, ChannelClosedByBroker)
+CONNECT_ERROR = "CONNECT_ERROR"
+CONSUME_ERROR = "CONSUME_ERROR"
+
+logger = logging.getLogger("pyrmq")
 
 
 class Consumer(object):
@@ -139,41 +142,56 @@ class Consumer(object):
         self.thread.setDaemon(True)
         self.thread.start()
 
+    def __run_error_callback(
+        self, message: str, error: Exception, error_type: str
+    ) -> None:
+        """
+        Log error message
+        :param message: Message to be logged in error_callback
+        :param error: Error encountered in consuming the message
+        :param error_type: Type of error (CONNECT_ERROR or CONSUME_ERROR)
+        """
+        if self.error_callback:
+            try:
+                self.error_callback(message, error=error, error_type=error_type)
+
+            except Exception as exception:
+                logger.exception(exception)
+
+        else:
+            logger.exception(error)
+
     def __send_reconnection_error_message(
         self,
-        retry_count: int,
         error: Union[AMQPConnectionError, ConnectionResetError, ChannelClosedByBroker],
+        retry_count: int,
     ) -> None:
         """
         Send error message to your preferred location.
-        :param retry_count: Amount retries the Publisher tried before sending an error message.
-        :param error: Error that prevented the Publisher from sending the message.
+        :param error: Error that prevented the Consumer from processing the message.
+        :param retry_count: Amount retries the Consumer tried before sending an error message.
         """
         message = (
             f"Service tried to reconnect to queue **{retry_count}** times "
             f"but still failed."
             f"\n{repr(error)}"
         )
-        if self.error_callback:
-            self.error_callback(message)
-        else:
-            logger.exception(error)
+        self.__run_error_callback(message, error, CONNECT_ERROR)
 
-    def __send_consume_error_message(self, retry_count: int, error: Exception) -> None:
+    def __send_consume_error_message(
+        self, error: Exception, retry_count: int = 1
+    ) -> None:
         """
         Send error message to your preferred location.
+        :param error: Error that prevented the Consumer from processing the message.
         :param retry_count: Amount retries the Consumer tried before sending an error message.
-        :param error: Error that prevented the Consumer from processing the callback.
         """
         message = (
             f"Service tried to consume message **{retry_count}** times "
             f"but still failed."
             f"\n{repr(error)}"
         )
-        if self.error_callback:
-            self.error_callback(message)
-
-        logger.exception(error)
+        self.__run_error_callback(message, error, CONSUME_ERROR)
 
     def __create_connection(self) -> BlockingConnection:
         """
@@ -187,17 +205,18 @@ class Consumer(object):
         """
         b = self.retry_backoff_base
         n = self.retry_delay * 1000
+
         return b ** (retry_count - 1) * n  # 5, 10, 20, 40, 80
 
     def _publish_to_retry_queue(
-        self, data: dict, properties, retry_reason: Exception = None
+        self, data: dict, properties, retry_reason: Exception
     ) -> None:
         """
         Publishes message to retry queue with the appropriate metadata in the headers.
         """
         headers = properties.headers or {}
         attempt = headers.get("x-attempt", 0) + 1
-        self.__send_consume_error_message(attempt, retry_reason)
+        self.__send_consume_error_message(retry_reason, attempt)
 
         if attempt > self.max_retries:
             return
@@ -217,6 +236,7 @@ class Consumer(object):
                 "x-next-attempt": next_attempt.isoformat(),
             },
         }
+
         for i in range(1, attempt + 1):
             attempt_no = f"x-attempt-{i}"
             previous_attempts = message_properties["headers"]
@@ -252,9 +272,10 @@ class Consumer(object):
 
         except Exception as error:
             if self.is_dlk_retry_enabled:
-                self._publish_to_retry_queue(data, properties, retry_reason=error)
+                self._publish_to_retry_queue(data, properties, error)
+
             else:
-                logger.exception(error)
+                self.__send_consume_error_message(error)
 
         if auto_ack or (auto_ack is None and self.auto_ack):
             channel.basic_ack(delivery_tag=method.delivery_tag)
@@ -272,11 +293,13 @@ class Consumer(object):
             self.channel = self.connection.channel()
 
         except CONNECTION_ERRORS as error:
-            self.__send_reconnection_error_message(
-                self.connection_attempts * retry_count, error
-            )
-            if not self.infinite_retry:
-                raise error
+            if not (retry_count % self.connection_attempts):
+                self.__send_reconnection_error_message(
+                    error, self.connection_attempts * retry_count
+                )
+
+                if not self.infinite_retry:
+                    raise error
 
             time.sleep(self.retry_delay)
 
@@ -299,7 +322,8 @@ class Consumer(object):
 
         except CONNECTION_ERRORS as error:
             if not (retry_count % self.connection_attempts):
-                self.__send_reconnection_error_message(retry_count, error)
+                self.__send_reconnection_error_message(error, retry_count)
+
                 if not self.infinite_retry:
                     raise error
 

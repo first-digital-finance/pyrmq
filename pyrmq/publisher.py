@@ -26,6 +26,7 @@ from pika.spec import PERSISTENT_DELIVERY_MODE
 
 CONNECTION_ERRORS = (AMQPConnectionError, ConnectionResetError, StreamLostError)
 CHANNEL_ERROR = AMQPChannelError
+CONNECT_ERROR = "CONNECT_ERROR"
 
 logger = logging.getLogger("pyrmq")
 
@@ -88,11 +89,11 @@ class Publisher(object):
 
         self.connections = {}
 
-    def __send_reconnection_error_message(self, retry_count, error) -> None:
+    def __send_reconnection_error_message(self, error, retry_count) -> None:
         """
         Send error message to your preferred location.
-        :param retry_count: Amount retries the Publisher tried before sending an error message.
         :param error: Error that prevented the Publisher from sending the message.
+        :param retry_count: Amount retries the Publisher tried before sending an error message.
         """
         message = (
             f"Service tried to reconnect to queue **{retry_count}** times "
@@ -101,7 +102,12 @@ class Publisher(object):
         )
 
         if self.error_callback:
-            self.error_callback(message)
+            try:
+                self.error_callback(message, error=error, error_type=CONNECT_ERROR)
+
+            except Exception as exception:
+                logger.exception(exception)
+
         else:
             logger.exception(error)
 
@@ -153,8 +159,9 @@ class Publisher(object):
         except CONNECTION_ERRORS as error:
             if not (retry_count % self.connection_attempts):
                 self.__send_reconnection_error_message(
-                    self.connection_attempts * retry_count, error
+                    error, self.connection_attempts * retry_count
                 )
+
                 if not self.infinite_retry:
                     raise error
 
@@ -198,7 +205,8 @@ class Publisher(object):
 
         except CONNECTION_ERRORS as error:
             if not (retry_count % self.connection_attempts):
-                self.__send_reconnection_error_message(retry_count, error)
+                self.__send_reconnection_error_message(error, retry_count)
+
                 if not self.infinite_retry:
                     raise error
 
@@ -208,7 +216,8 @@ class Publisher(object):
 
         except CHANNEL_ERROR as error:
             if not (retry_count % self.connection_attempts):
-                self.__send_reconnection_error_message(retry_count, error)
+                self.__send_reconnection_error_message(error, retry_count)
+
                 if not self.infinite_retry:
                     raise error
 
