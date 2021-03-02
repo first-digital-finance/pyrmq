@@ -57,6 +57,7 @@ class Publisher(object):
         :keyword retry_delay: Seconds between retries. Default: ``5``
         :keyword error_callback: Callback function to be called when connection_attempts is reached.
         :keyword infinite_retry: Tells PyRMQ to keep on retrying to publish while firing error_callback, if any. Default: ``False``
+        :keyword exchange_args: Your exchange arguments. Default: ``None``
         :keyword queue_args: Your queue arguments. Default: ``None``
         """
 
@@ -74,6 +75,7 @@ class Publisher(object):
         self.retry_backoff_constant_secs = kwargs.get("retry_backoff_constant_secs", 5)
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry", False)
+        self.exchange_args = kwargs.get("exchange_args")
         self.queue_args = kwargs.get("queue_args")
 
         self.connection_parameters = ConnectionParameters(
@@ -115,7 +117,10 @@ class Publisher(object):
         :param channel: pika Channel
         """
         channel.exchange_declare(
-            exchange=self.exchange_name, durable=True, exchange_type=self.exchange_type
+            exchange=self.exchange_name,
+            durable=True,
+            exchange_type=self.exchange_type,
+            arguments=self.exchange_args,
         )
 
         if not self.queue_name or not self.routing_key:

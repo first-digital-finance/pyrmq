@@ -54,6 +54,7 @@ class Consumer(object):
         :keyword retry_backoff_base: Exponential backoff base in seconds. Default: ``2``
         :keyword retry_queue_suffix: The suffix that will be appended to the ``queue_name`` to act as the name of the retry_queue. Default: ``retry``
         :keyword max_retries: Number of maximum retries for DLK retry logic. Default: ``20``
+        :keyword exchange_args: Your exchange arguments. Default: ``None``
         :keyword queue_args: Your queue arguments. Default: ``None``
         :keyword auto_ack: Flag whether to ack or nack the consumed message regardless of its outcome. Default: ``True``
         """
@@ -78,6 +79,7 @@ class Consumer(object):
         self.max_retries = kwargs.get("max_retries", 20)
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry", False)
+        self.exchange_args = kwargs.get("exchange_args")
         self.queue_args = kwargs.get("queue_args")
         self.auto_ack = kwargs.get("auto_ack", True)
         self.channel = None
@@ -113,7 +115,10 @@ class Consumer(object):
         Declare and a bind a channel to a queue.
         """
         self.channel.exchange_declare(
-            exchange=self.exchange_name, durable=True, exchange_type=self.exchange_type
+            exchange=self.exchange_name,
+            durable=True,
+            exchange_type=self.exchange_type,
+            arguments=self.exchange_args,
         )
 
         self.channel.queue_declare(
