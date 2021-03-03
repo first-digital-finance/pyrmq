@@ -342,3 +342,62 @@ def should_nack_message_when_callback_method_returns_false(
     consumer.start()
     assert_consumed_infinite_loop(response, {"count": 1})
     consumer.close()
+
+
+def should_consume_from_the_routed_queue_as_specified_in_headers() -> None:
+    bound_exchange_name = "headers_exchange_name"
+    routing_key = "headers_routing_key"
+    first_response = {"count": 0}
+    second_response = {"count": 0}
+
+    def first_callback(data: dict, **kwargs):
+        first_response["count"] = first_response["count"] + 1
+
+    def second_callback(data: dict, **kwargs):
+        second_response["count"] = second_response["count"] + 1
+
+    # Connect and declare the first exchange/queue pair that subscribes to the bound exchange of type headers
+    first_consumer = Consumer(
+        exchange_name="first_exchange",
+        queue_name="first_queue",
+        routing_key=routing_key,
+        bound_exchange={"name": bound_exchange_name, "type": "headers"},
+        exchange_args={
+            "routing.first": "first",
+            "x-match": "all",
+        },
+        callback=first_callback,
+    )
+    first_consumer.connect()
+    first_consumer.declare_queue()
+
+    # Connect and declare the second exchange/queue pair that subscribes to the bound exchange of type headers
+    second_consumer = Consumer(
+        exchange_name="second_exchange",
+        queue_name="second_queue",
+        routing_key=routing_key,
+        bound_exchange={"name": bound_exchange_name, "type": "headers"},
+        exchange_args={
+            "routing.second": "second",
+            "x-match": "all",
+        },
+        callback=second_callback,
+    )
+    second_consumer.connect()
+    second_consumer.declare_queue()
+
+    publisher = Publisher(
+        exchange_name=bound_exchange_name,
+        exchange_type="headers",
+        routing_key=routing_key,
+    )
+    publisher.publish({}, message_properties={"headers": {"routing.first": "first"}})
+    publisher.publish({}, message_properties={"headers": {"routing.second": "second"}})
+
+    first_consumer.start()
+    assert_consumed_message(first_response, {"count": 1})
+    first_consumer.close()
+
+    second_consumer.start()
+    assert_consumed_message(second_response, {"count": 1})
+    second_consumer.close()

@@ -132,6 +132,43 @@ publisher.publish({"pyrmq": "My first message"}, message_properties=message_prop
 This is an example of how to publish to a headers exchange that will get routed
 based on its headers.
 
+#### Binding an exchange to another exchange
+By default, the `exchange_name` you pass when initializing a `Consumer` is declared and bound to the passed
+`queue_name`. What if you want to bind and declare this exchange to another exchange as well?
+
+This is done by using `bound_exchange`. This parameter accepts an object with two keys: `name` of your exchange and its
+`type`. Let's take a look at an example to see this in action.
+
+```py
+from pyrmq import Consumer
+
+def callback(data):
+    print(f"Received {data}!")
+    raise Exception
+
+consumer = Consumer(
+    exchange_name="direct_exchange",
+    queue_name="direct_queue",
+    routing_key="routing_key",
+    bound_exchange={"name": "headers_exchange_name", "type": "headers"},
+    callback=callback,
+    is_dlk_retry_enabled=True,
+)
+consumer.start()
+```
+
+In the example above, we want to consume from an exchange called `direct_exchange` that is directly bound to queue
+`direct_queue`. We want `direct_exchange` to get its messages from another exchange called `headers_exchange_name` of
+type `headers`. By using `bound_exchange`, PyRMQ declares `direct_exchange` and `direct_queue` along with any queue or
+exchange arguments you may have _first_ then declares the bound exchange next and binds them together. This is done
+to alleviate the need to declare your bound exchange manually.
+
+| :warning: Important                                                                                |
+|:---------------------------------------------------------------------------------------------------|
+Since this method uses [e2e bindings](https://www.rabbitmq.com/e2e.html), if you're using a headers exchange to bind
+your consumer to, they _and_ your publisher must all have the same routing key to route the messages properly. This
+is not needed for exchange to queue bindings as the routing key is optional for those.
+
 ## Documentation
 Visit https://pyrmq.readthedocs.io for the most up-to-date documentation.
 

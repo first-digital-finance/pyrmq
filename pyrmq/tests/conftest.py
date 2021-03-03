@@ -67,3 +67,13 @@ def priority_session(priority_publisher: Publisher):
     channel = priority_publisher.connect()
     channel.queue_purge(TEST_PRIORITY_QUEUE_NAME)
     channel.queue_delete(TEST_PRIORITY_QUEUE_NAME)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def clean_specific_queues(priority_publisher: Publisher):
+    channel = priority_publisher.connect()
+    channel.queue_delete("first_queue")
+    channel.queue_delete("second_queue")
+    channel.exchange_delete("first_exchange")
+    channel.exchange_delete("second_exchange")
+    channel.exchange_delete("headers_exchange_name")

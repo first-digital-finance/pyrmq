@@ -59,6 +59,7 @@ class Consumer(object):
         :keyword max_retries: Number of maximum retries for DLK retry logic. Default: ``20``
         :keyword exchange_args: Your exchange arguments. Default: ``None``
         :keyword queue_args: Your queue arguments. Default: ``None``
+        :keyword bound_exchange: The exchange this consumer needs to bind to. This is an object that has two keys, ``name`` and ``type``. Default: ``None``
         :keyword auto_ack: Flag whether to ack or nack the consumed message regardless of its outcome. Default: ``True``
         """
 
@@ -84,6 +85,7 @@ class Consumer(object):
         self.infinite_retry = kwargs.get("infinite_retry", False)
         self.exchange_args = kwargs.get("exchange_args")
         self.queue_args = kwargs.get("queue_args")
+        self.bound_exchange = kwargs.get("bound_exchange")
         self.auto_ack = kwargs.get("auto_ack", True)
         self.channel = None
         self.thread = None
@@ -133,6 +135,21 @@ class Consumer(object):
             routing_key=self.routing_key,
             arguments=self.queue_args,
         )
+
+        if self.bound_exchange:
+            bound_exchange_name = self.bound_exchange["name"]
+            bound_exchange_type = self.bound_exchange["type"]
+            self.channel.exchange_declare(
+                exchange=bound_exchange_name,
+                durable=True,
+                exchange_type=bound_exchange_type,
+            )
+            self.channel.exchange_bind(
+                destination=self.exchange_name,
+                source=bound_exchange_name,
+                routing_key=self.routing_key,
+                arguments=self.exchange_args,
+            )
 
     def start(self):
         self.connect()
