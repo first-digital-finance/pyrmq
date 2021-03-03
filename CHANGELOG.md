@@ -1,3 +1,17 @@
+# [3.0.0](https://github.com/first-digital-finance/pyrmq/compare/v2.1.1...v3.0.0) (2021-03-03)
+
+
+### Bug Fixes
+
+* add exchange_args to both consumer and publisher ([#36](https://github.com/first-digital-finance/pyrmq/issues/36)) ([e5799a0](https://github.com/first-digital-finance/pyrmq/commit/e5799a0c98527629b39726f4518fc6458d031059))
+* pass error and error_type to error_callback ([afc56da](https://github.com/first-digital-finance/pyrmq/commit/afc56da035edf545678bf9acfb1e0cb7abd1d9d0))
+
+
+### BREAKING CHANGES
+
+* error_callback should accept additional keyword
+arguments namely `error` and `error_type`
+
 ## [2.1.1](https://github.com/first-digital-finance/pyrmq/compare/v2.1.0...v2.1.1) (2021-02-16)
 
 
