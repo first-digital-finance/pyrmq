@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/first-digital-finance/pyrmq/compare/v3.0.0...v3.1.0) (2021-03-03)
+
+
+### Features
+
+* **consumer:** allow for consumers use bound exchanges ([988dd90](https://github.com/first-digital-finance/pyrmq/commit/988dd90afa49175e861e656025912a5d2b99a655))
+
 # [3.0.0](https://github.com/first-digital-finance/pyrmq/compare/v2.1.1...v3.0.0) (2021-03-03)
 
 
