@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/first-digital-finance/pyrmq/compare/v3.1.0...v3.2.0) (2021-03-16)
+
+
+### Features
+
+* **consumer:** add prefetch_count kwarg ([3c814cb](https://github.com/first-digital-finance/pyrmq/commit/3c814cbbc39b6306104bc6eb289ff7479af65148))
+
 # [3.1.0](https://github.com/first-digital-finance/pyrmq/compare/v3.0.0...v3.1.0) (2021-03-03)
 
 
