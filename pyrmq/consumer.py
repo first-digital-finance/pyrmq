@@ -61,6 +61,7 @@ class Consumer(object):
         :keyword queue_args: Your queue arguments. Default: ``None``
         :keyword bound_exchange: The exchange this consumer needs to bind to. This is an object that has two keys, ``name`` and ``type``. Default: ``None``
         :keyword auto_ack: Flag whether to ack or nack the consumed message regardless of its outcome. Default: ``True``
+        :keyword prefetch_count: How many messages should the consumer retrieve at a time for consumption. Default: ``1``
         """
 
         from pyrmq import Publisher
@@ -87,6 +88,7 @@ class Consumer(object):
         self.queue_args = kwargs.get("queue_args")
         self.bound_exchange = kwargs.get("bound_exchange")
         self.auto_ack = kwargs.get("auto_ack", True)
+        self.prefetch_count = kwargs.get("prefetch_count", 1)
         self.channel = None
         self.thread = None
 
@@ -308,6 +310,7 @@ class Consumer(object):
         try:
             self.connection = self.__create_connection()
             self.channel = self.connection.channel()
+            self.channel.basic_qos(prefetch_count=self.prefetch_count)
 
         except CONNECTION_ERRORS as error:
             if not (retry_count % self.connection_attempts):
