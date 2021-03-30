@@ -33,8 +33,8 @@ logger = logging.getLogger("pyrmq")
 
 class Publisher(object):
     """
-    This class offers a ``BlockingConnection`` from pika that automatically handles
-    queue declares and bindings plus retry logic built for its connection and publishing.
+    This class uses a ``BlockingConnection`` from pika that automatically handles
+    queue declarations and bindings plus retry logic built for its connection and publishing.
     """
 
     def __init__(
@@ -113,13 +113,13 @@ class Publisher(object):
 
     def __create_connection(self) -> BlockingConnection:
         """
-        Creates pika's ``BlockingConnection`` from the given connection parameters.
+        Create pika's ``BlockingConnection`` from the given connection parameters.
         """
         return BlockingConnection(self.connection_parameters)
 
     def declare_queue(self, channel) -> None:
         """
-        Declare and a bind a channel to a queue.
+        Declare and bind a channel to a queue.
         :param channel: pika Channel
         """
         channel.exchange_declare(
@@ -144,7 +144,7 @@ class Publisher(object):
 
     def connect(self, retry_count=1) -> BlockingChannel:
         """
-        Creates pika's ``BlockingConnection`` and initializes queue bindings.
+        Create pika's ``BlockingConnection`` and initialize queue bindings.
         :param retry_count: Amount retries the Publisher tried before sending an error message.
         """
         try:
@@ -178,7 +178,7 @@ class Publisher(object):
         retry_count: int = 1,
     ) -> None:
         """
-        Publishes data to RabbitMQ.
+        Publish data to RabbitMQ.
         :param data: Data to be published.
         :param priority: Message priority. Only works if ``x-max-priority`` is defined as queue argument.
         :param message_properties: Message properties. Default: ``{"delivery_mode": 2}``

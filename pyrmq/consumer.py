@@ -29,7 +29,7 @@ logger = logging.getLogger("pyrmq")
 class Consumer(object):
     """
     This class uses a ``BlockingConnection`` from pika that automatically handles
-    queue declares and bindings plus retry logic built for its connection and consumption.
+    queue declarations and bindings plus retry logic built for its connection and consumption.
     It starts its own thread upon initialization and runs pika's ``start_consuming()``.
     """
 
@@ -119,7 +119,7 @@ class Consumer(object):
 
     def declare_queue(self) -> None:
         """
-        Declare and a bind a channel to a queue.
+        Declare and bind a channel to a queue.
         """
         self.channel.exchange_declare(
             exchange=self.exchange_name,
@@ -165,7 +165,7 @@ class Consumer(object):
         self, message: str, error: Exception, error_type: str
     ) -> None:
         """
-        Log error message
+        Log error message.
         :param message: Message to be logged in error_callback
         :param error: Error encountered in consuming the message
         :param error_type: Type of error (CONNECT_ERROR or CONSUME_ERROR)
@@ -214,13 +214,13 @@ class Consumer(object):
 
     def __create_connection(self) -> BlockingConnection:
         """
-        Creates a pika BlockingConnection from the given connection parameters.
+        Create pika's ``BlockingConnection`` from the given connection parameters.
         """
         return BlockingConnection(self.connection_parameters)
 
     def _compute_expiration(self, retry_count: int) -> int:
         """
-        Computes message expiration time from the retry queue in seconds.
+        Compute message expiration time from the retry queue in seconds.
         """
         b = self.retry_backoff_base
         n = self.retry_delay * 1000
@@ -231,7 +231,7 @@ class Consumer(object):
         self, data: dict, properties, retry_reason: Exception
     ) -> None:
         """
-        Publishes message to retry queue with the appropriate metadata in the headers.
+        Publish message to retry queue with the appropriate metadata in the headers.
         """
         headers = properties.headers or {}
         attempt = headers.get("x-attempt", 0) + 1
@@ -267,8 +267,8 @@ class Consumer(object):
 
     def _consume_message(self, channel, method, properties, data: dict) -> None:
         """
-        Wraps the user provided callback and gracefully handles its errors and
-        calling pika's ``basic_ack`` once successful.
+        Wrap the user-provided callback, gracefully handle its errors, and
+        call pika's ``basic_ack`` once successful.
         :param channel: pika's Channel this message was received.
         :param method: pika's basic Return
         :param properties: pika's BasicProperties
@@ -304,8 +304,8 @@ class Consumer(object):
 
     def connect(self, retry_count=1) -> None:
         """
-        Creates a BlockingConnection from pika and initializes queue bindings.
-        :param retry_count: Amount retries the Publisher tried before sending an error message.
+        Create pika's ``BlockingConnection`` and initialize queue bindings.
+        :param retry_count: Amount retries the Consumer tried before sending an error message.
         """
         try:
             self.connection = self.__create_connection()
@@ -327,13 +327,13 @@ class Consumer(object):
 
     def close(self) -> None:
         """
-        Manually closes a connection to RabbitMQ. Useful for debugging and tests.
+        Manually close a connection to RabbitMQ. This is useful for debugging and tests.
         """
         self.thread.join(0.1)
 
     def consume(self, retry_count=1) -> None:
         """
-        Wraps pika's ``basic_consume()`` and ``start_consuming()`` with retry logic.
+        Wrap pika's ``basic_consume()`` and ``start_consuming()`` with retry logic.
         """
         try:
             self.channel.basic_consume(self.queue_name, self._consume_message)
