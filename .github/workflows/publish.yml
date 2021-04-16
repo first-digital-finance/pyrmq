@@ -1,11 +1,11 @@
 name: Upload PyRMQ to PyPI
 
-on:
-  workflow_run:
-    workflows: ["Test across Python versions"]
-    branches: [master]
-    types:
-      - completed
+on: workflow_dispatch
+  # workflow_run:
+  #   workflows: ["Test across Python versions"]
+  #   branches: [master]
+  #   types:
+  #     - completed
 
 jobs:
   deploy:
