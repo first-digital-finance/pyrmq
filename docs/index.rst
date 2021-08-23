@@ -107,7 +107,7 @@ able to receive the published data.
 DLX-DLK Retry Logic
 -------------------
 What if you wanted to retry a failure on a consumed message? PyRMQ offers a custom solution that keeps your message
-in queues while retrying in an `exponential backoff`_ fashion.
+in queues while retrying periodically for a set amount of times.
 
 This approach uses `dead letter exchanges and queues`_ to republish a message to your
 original queue once it has expired. PyRMQ creates this "retry" queue for you with the default naming convention of
@@ -133,6 +133,11 @@ appending your original queue with `.retry`.
 This will start a loop of passing your message between the original queue and the retry queue until it reaches
 the default number of ``max_retries``.
 
+DLX-DLK Retry backoff vs Periodic retries
+-----------------------------------------
+Since `RabbitMQ does not remove expired messages that aren't at the head of the queue`_,
+this leads to a congestion of the retry queue that is bottlenecked with an unexpired message
+at the head. As such, as of 3.3.0, PyRMQ will be using a simple periodic retry.
 
 Using other exchange types
 --------------------------
@@ -207,6 +212,5 @@ User Guide
 .. _default initialization settings: https://hub.docker.com/_/rabbitmq)
 .. _PyPI: https://pypi.org/project/PyRMQ/
 .. _here: https://www.rabbitmq.com/priority.html
-.. _exponential backoff: https://en.wikipedia.org/wiki/Exponential_backoff
-.. _dead letter exchanges and queues: https://www.rabbitmq.com/dlx.html
+.. _RabbitMQ does not remove expired messages that aren't at the head of the queue: https://www.rabbitmq.com/ttl.html#per-message-ttl-caveats
 .. _e2e bindings: https://www.rabbitmq.com/e2e.html

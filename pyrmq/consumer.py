@@ -53,8 +53,8 @@ class Consumer(object):
         :keyword password: Your RabbitMQ password. Default: ``"guest"``
         :keyword connection_attempts: How many times should PyRMQ try? Default: ``3``
         :keyword is_dlk_retry_enabled: Flag to enable DLK-based retry logic of consumed messages. Default: ``False``
-        :keyword retry_delay: Seconds between retries. Default: ``5``
-        :keyword retry_backoff_base: Exponential backoff base in seconds. Default: ``2``
+        :keyword retry_delay: Seconds between connection retries. Default: ``5``
+        :keyword retry_interval: Seconds between consumption retries. Default: ``900``
         :keyword retry_queue_suffix: The suffix that will be appended to the ``queue_name`` to act as the name of the retry_queue. Default: ``retry``
         :keyword max_retries: Number of maximum retries for DLK retry logic. Default: ``20``
         :keyword exchange_args: Your exchange arguments. Default: ``None``
@@ -78,8 +78,8 @@ class Consumer(object):
         self.password = kwargs.get("password", "guest")
         self.connection_attempts = kwargs.get("connection_attempts", 3)
         self.retry_delay = kwargs.get("retry_delay", 5)
+        self.retry_interval = kwargs.get("retry_delay", 900)  # 15 minutes
         self.is_dlk_retry_enabled = kwargs.get("is_dlk_retry_enabled", False)
-        self.retry_backoff_base = kwargs.get("retry_backoff_base", 2)
         self.retry_queue_suffix = kwargs.get("retry_queue_suffix", "retry")
         self.max_retries = kwargs.get("max_retries", 20)
         self.error_callback = kwargs.get("error_callback")
@@ -165,7 +165,7 @@ class Consumer(object):
         self, message: str, error: Exception, error_type: str
     ) -> None:
         """
-        Log error message.
+        Log error message
         :param message: Message to be logged in error_callback
         :param error: Error encountered in consuming the message
         :param error_type: Type of error (CONNECT_ERROR or CONSUME_ERROR)
@@ -218,15 +218,6 @@ class Consumer(object):
         """
         return BlockingConnection(self.connection_parameters)
 
-    def _compute_expiration(self, retry_count: int) -> int:
-        """
-        Compute message expiration time from the retry queue in seconds.
-        """
-        b = self.retry_backoff_base
-        n = self.retry_delay * 1000
-
-        return b ** (retry_count - 1) * n  # 5, 10, 20, 40, 80
-
     def _publish_to_retry_queue(
         self, data: dict, properties, retry_reason: Exception
     ) -> None:
@@ -240,9 +231,9 @@ class Consumer(object):
         if attempt > self.max_retries:
             return
 
-        expiration = self._compute_expiration(attempt)
+        expiration = self.retry_interval * 1000
         now = datetime.now()
-        next_attempt = now + timedelta(seconds=(expiration // 1000))
+        next_attempt = now + timedelta(seconds=self.retry_interval)
         message_properties = {
             **properties.__dict__,
             "expiration": str(expiration),
