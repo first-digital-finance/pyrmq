@@ -55,7 +55,7 @@ class Publisher(object):
         :keyword username: Your RabbitMQ username. Default: ``"guest"``
         :keyword password: Your RabbitMQ password. Default: ``"guest"``
         :keyword connection_attempts: How many times should PyRMQ try?. Default: ``3``
-        :keyword retry_delay: Seconds between retries. Default: ``5``
+        :keyword retry_delay: Seconds between connection retries. Default: ``5``
         :keyword error_callback: Callback function to be called when connection_attempts is reached.
         :keyword infinite_retry: Tells PyRMQ to keep on retrying to publish while firing error_callback, if any. Default: ``False``
         :keyword exchange_args: Your exchange arguments. Default: ``None``
@@ -72,8 +72,6 @@ class Publisher(object):
         self.password = kwargs.get("password", "guest")
         self.connection_attempts = kwargs.get("connection_attempts", 3)
         self.retry_delay = kwargs.get("retry_delay", 5)
-        self.retry_backoff_base = kwargs.get("retry_backoff_base", 2)
-        self.retry_backoff_constant_secs = kwargs.get("retry_backoff_constant_secs", 5)
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry", False)
         self.exchange_args = kwargs.get("exchange_args")
