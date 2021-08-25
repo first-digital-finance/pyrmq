@@ -1,3 +1,10 @@
+# [3.3.0](https://github.com/first-digital-finance/pyrmq/compare/v3.2.0...v3.3.0) (2021-08-25)
+
+
+### Features
+
+* **dlk:** use periodic retry instead of retry backoff for DLX-DLK logic ([5a34c0d](https://github.com/first-digital-finance/pyrmq/commit/5a34c0d12134f759ee20f434b2324a0d44e5168d))
+
 # [3.2.0](https://github.com/first-digital-finance/pyrmq/compare/v3.1.0...v3.2.0) (2021-03-16)
 
 
