@@ -1,3 +1,10 @@
+# [3.4.0](https://github.com/first-digital-finance/pyrmq/compare/v3.3.0...v3.4.0) (2021-10-29)
+
+
+### Features
+
+* add Python 3.10 support ([4f36653](https://github.com/first-digital-finance/pyrmq/commit/4f366530b58d0150de13f19cb93ed95f56e23cca))
+
 # [3.3.0](https://github.com/first-digital-finance/pyrmq/compare/v3.2.0...v3.3.0) (2021-08-25)
 
 
