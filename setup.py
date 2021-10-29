@@ -43,7 +43,7 @@ setup(
     test_suite="pyrmq.tests",
     install_requires=["setuptools>=49.6.0", "pika>=1.1.0"],
     keywords=["rabbitmq", "pika", "consumer", "publisher", "queue", "messages"],
-    python_requires=">=3.5",
+    python_requires=">=3.6",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -56,5 +56,6 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
 )
