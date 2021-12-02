@@ -17,9 +17,17 @@ from threading import Thread
 from typing import Callable, Optional, Union
 
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
-from pika.exceptions import AMQPConnectionError, ChannelClosedByBroker
+from pika.adapters.utils.connection_workflow import AMQPConnectorException
+from pika.exceptions import AMQPChannelError, AMQPConnectionError, ChannelClosedByBroker
 
-CONNECTION_ERRORS = (AMQPConnectionError, ConnectionResetError, ChannelClosedByBroker)
+CONNECTION_ERRORS = (
+    AMQPConnectionError,
+    AMQPConnectorException,
+    AMQPChannelError,
+    ConnectionResetError,
+    ChannelClosedByBroker,
+    ConnectionError,
+)
 CONNECT_ERROR = "CONNECT_ERROR"
 CONSUME_ERROR = "CONSUME_ERROR"
 

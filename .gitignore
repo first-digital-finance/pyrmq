@@ -38,3 +38,6 @@ htmlcov
 
 #Docs
 _build
+
+.python-version
+.DS_Store
