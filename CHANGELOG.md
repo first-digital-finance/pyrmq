@@ -1,3 +1,10 @@
+## [3.4.1](https://github.com/first-digital-finance/pyrmq/compare/v3.4.0...v3.4.1) (2021-12-02)
+
+
+### Bug Fixes
+
+* add more exceptions to retry during connection attempts ([fa9e19e](https://github.com/first-digital-finance/pyrmq/commit/fa9e19ee645235ef92ab160f1fe9c3a71f2eeeb3))
+
 # [3.4.0](https://github.com/first-digital-finance/pyrmq/compare/v3.3.0...v3.4.0) (2021-10-29)
 
 
