@@ -21,10 +21,24 @@ from pika import (
     PlainCredentials,
 )
 from pika.adapters.blocking_connection import BlockingChannel
-from pika.exceptions import AMQPChannelError, AMQPConnectionError, StreamLostError
+from pika.adapters.utils.connection_workflow import AMQPConnectorException
+from pika.exceptions import (
+    AMQPChannelError,
+    AMQPConnectionError,
+    ChannelClosedByBroker,
+    StreamLostError,
+)
 from pika.spec import PERSISTENT_DELIVERY_MODE
 
-CONNECTION_ERRORS = (AMQPConnectionError, ConnectionResetError, StreamLostError)
+CONNECTION_ERRORS = (
+    AMQPConnectionError,
+    AMQPConnectorException,
+    AMQPChannelError,
+    ConnectionResetError,
+    ChannelClosedByBroker,
+    ConnectionError,
+    StreamLostError,
+)
 CHANNEL_ERROR = AMQPChannelError
 CONNECT_ERROR = "CONNECT_ERROR"
 
