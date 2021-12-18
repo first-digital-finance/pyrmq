@@ -39,7 +39,6 @@ CONNECTION_ERRORS = (
     ConnectionError,
     StreamLostError,
 )
-CHANNEL_ERROR = AMQPChannelError
 CONNECT_ERROR = "CONNECT_ERROR"
 
 logger = logging.getLogger("pyrmq")
@@ -224,14 +223,4 @@ class Publisher(object):
 
             time.sleep(self.retry_delay)
 
-            self.publish(data, attempt=attempt, retry_count=(retry_count + 1))
-
-        except CHANNEL_ERROR as error:
-            if not (retry_count % self.connection_attempts):
-                self.__send_reconnection_error_message(error, retry_count)
-
-                if not self.infinite_retry:
-                    raise error
-
-            time.sleep(self.retry_delay)
             self.publish(data, attempt=attempt, retry_count=(retry_count + 1))
