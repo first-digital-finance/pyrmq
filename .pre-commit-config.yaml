@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/ambv/black
-    rev: stable
+    rev: 22.3.0
     hooks:
       - id: black
         args: [--quiet]
@@ -28,13 +28,6 @@ repos:
       - id: isort
         files: 'pyrmq/.*'
         args: ["--profile", "black"]
-
-  - repo: https://github.com/ambv/black
-    rev: 20.8b1
-    hooks:
-      - id: black
-        types:
-         - python
 
   - repo: https://github.com/commitizen-tools/commitizen
     rev: master
