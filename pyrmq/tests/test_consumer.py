@@ -248,7 +248,7 @@ def should_republish_message_to_original_queue_with_dlk_retry_enabled(
         routing_key=publisher_session.routing_key,
         callback=callback,
         is_dlk_retry_enabled=True,
-        retry_delay=1,
+        retry_interval=1,
         error_callback=error_callback,
     )
     consumer.start()
@@ -278,7 +278,7 @@ def should_retry_up_to_max_retries_with_proper_headers_with_dlk_retry_enabled(
         routing_key=publisher_session.routing_key,
         callback=callback,
         is_dlk_retry_enabled=True,
-        retry_delay=1,
+        retry_interval=1,
         max_retries=1,
     )
     consumer.start()

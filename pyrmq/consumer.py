@@ -86,7 +86,7 @@ class Consumer(object):
         self.password = kwargs.get("password", "guest")
         self.connection_attempts = kwargs.get("connection_attempts", 3)
         self.retry_delay = kwargs.get("retry_delay", 5)
-        self.retry_interval = kwargs.get("retry_delay", 900)  # 15 minutes
+        self.retry_interval = kwargs.get("retry_interval", 5)
         self.is_dlk_retry_enabled = kwargs.get("is_dlk_retry_enabled", False)
         self.retry_queue_suffix = kwargs.get("retry_queue_suffix", "retry")
         self.max_retries = kwargs.get("max_retries", 20)
