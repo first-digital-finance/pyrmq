@@ -1,3 +1,10 @@
+## [3.4.2](https://github.com/first-digital-finance/pyrmq/compare/v3.4.1...v3.4.2) (2022-09-15)
+
+
+### Bug Fixes
+
+* **consumer:** use the correct kwarg for retry_interval ([a613310](https://github.com/first-digital-finance/pyrmq/commit/a613310d79ec23dd64312779233b23bf6ec64732))
+
 ## [3.4.1](https://github.com/first-digital-finance/pyrmq/compare/v3.4.0...v3.4.1) (2021-12-02)
 
 
