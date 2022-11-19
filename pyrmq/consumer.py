@@ -68,7 +68,7 @@ class Consumer(object):
         :keyword exchange_args: Your exchange arguments. Default: ``None``
         :keyword queue_args: Your queue arguments. Default: ``None``
         :keyword bound_exchange: The exchange this consumer needs to bind to. This is an object that has two keys, ``name`` and ``type``. Default: ``None``
-        :keyword auto_ack: Flag whether to ack or nack the consumed message regardless of its outcome. Default: ``True``
+        :keyword auto_ack: Flag whether to ack or nack the consumed message regardless of its outcome. if False and callback returns None, none ack/nack is performed. Default: ``True``
         :keyword prefetch_count: How many messages should the consumer retrieve at a time for consumption. Default: ``1``
         """
 
@@ -294,12 +294,14 @@ class Consumer(object):
 
             else:
                 self.__send_consume_error_message(error)
+            auto_ack = True # force ack when exception.
 
         if auto_ack or (auto_ack is None and self.auto_ack):
             channel.basic_ack(delivery_tag=method.delivery_tag)
 
-        else:
+        elif not self.auto_ack and auto_ack is not None:
             channel.basic_nack(delivery_tag=method.delivery_tag)
+        # else: manual ack if (auto_ack is None and not self.auto_ack)
 
     def connect(self, retry_count=1) -> None:
         """
