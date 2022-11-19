@@ -311,14 +311,18 @@ class Consumer(object):
 
             else:
                 self.__send_consume_error_message(error)
-            auto_ack = True # force ack when exception.
+            auto_ack = True  # force ack when exception.
 
-        if auto_ack or (auto_ack is None and self.auto_ack):
-            channel.basic_ack(delivery_tag=method.delivery_tag)
+        if not self.long_run_callback or auto_ack is not None:
+            self._do_ack_nack(auto_ack, method.delivery_tag, channel)
 
-        elif not self.auto_ack and auto_ack is not None:
-            channel.basic_nack(delivery_tag=method.delivery_tag)
-        # else: manual ack if (auto_ack is None and not self.auto_ack)
+    def _do_ack_nack(self, ack, delivery_tag, channel, manual=True):
+        if ack or (self.auto_ack and ack is None):
+            channel.basic_ack(delivery_tag=delivery_tag)
+        elif manual and not self.auto_ack and ack is None:
+            pass  # manual ack
+        else:
+            channel.basic_nack(delivery_tag=delivery_tag)
 
     def connect(self, retry_count=1) -> None:
         """
@@ -389,26 +393,20 @@ class Consumer(object):
             ack = False
             try:
                 ack = callback(data, channel=channel,
-                        method=method, properties=properties)
+                               method=method, properties=properties)
             except:
                 logger.exception(
                     'Exception on __long_run_callback_ack, %s. force nack.', data)
 
             delivery_tag = method.delivery_tag
             cb = functools.partial(
-                __long_run_ack_message, channel, delivery_tag, ack)
+                __long_run_do_ack_nack, channel, delivery_tag, ack)
             channel.connection.add_callback_threadsafe(cb)
 
-        def __long_run_ack_message(channel, delivery_tag, ack):
+        def __long_run_do_ack_nack(channel, delivery_tag, ack):
             if channel.is_open:
-                try:
-                    if ack:
-                        channel.basic_ack(delivery_tag)
-                    else:
-                        channel.basic_nack(delivery_tag)
-                except:
-                    logger.exception(
-                        'Exception in ack_message, %s, %s', delivery_tag, ack)
+                # no manual
+                self._do_ack_nack(ack, delivery_tag, channel, manual=False)
             else:
                 logger.error(
                     "Channel is already closed, so we can't ACK this message, %s, %s", delivery_tag, ack)
