@@ -8,12 +8,13 @@
     Full documentation is available at https://pyrmq.readthedocs.io
 """
 
+import functools
 import json
 import logging
 import os
+import threading
 import time
 from datetime import datetime, timedelta
-from threading import Thread
 from typing import Callable, Optional, Union
 
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
@@ -70,6 +71,7 @@ class Consumer(object):
         :keyword bound_exchange: The exchange this consumer needs to bind to. This is an object that has two keys, ``name`` and ``type``. Default: ``None``
         :keyword auto_ack: Flag whether to ack or nack the consumed message regardless of its outcome. if False and callback returns None, none ack/nack is performed. Default: ``True``
         :keyword prefetch_count: How many messages should the consumer retrieve at a time for consumption. Default: ``1``
+        :keyword long_run_callback: if True, runs callback in a separate thread. suitable for long running task. Default: False
         """
 
         from pyrmq import Publisher
@@ -79,7 +81,9 @@ class Consumer(object):
         self.queue_name = queue_name
         self.routing_key = routing_key
         self.exchange_type = exchange_type
-        self.message_received_callback = callback
+        self.long_run_callback = kwargs.get("long_run_callback")
+        self.message_received_callback = self.__wrap_message_received_callback(
+            callback, self.long_run_callback)
         self.host = kwargs.get("host") or os.getenv("RABBITMQ_HOST") or "localhost"
         self.port = kwargs.get("port") or os.getenv("RABBITMQ_PORT") or 5672
         self.username = kwargs.get("username", "guest")
@@ -165,7 +169,7 @@ class Consumer(object):
         self.connect()
         self.declare_queue()
 
-        self.thread = Thread(target=self.consume)
+        self.thread = threading.Thread(target=self.consume)
         self.thread.setDaemon(True)
         self.thread.start()
 
@@ -359,3 +363,48 @@ class Consumer(object):
 
             self.connect()
             self.consume(retry_count=(retry_count + 1))
+
+    def __wrap_message_received_callback(self, callback, long_run):
+        """
+        if long_run, start a new thread for callback.
+        """
+        if not long_run:
+            return callback
+
+        def __long_run_callback(data, channel, method, properties):
+            logger.debug('message_received_callback thread id: %s',
+                         threading.get_ident())
+
+            t = threading.Thread(target=__long_run_callback_ack, args=(
+                data, channel, method, properties))
+            t.start()
+
+        def __long_run_callback_ack(data, channel, method, properties):
+            ack = False
+            try:
+                ack = callback(data, channel=channel,
+                               method=method, properties=properties)
+            except:
+                logger.exception(
+                    'Exception on __long_run_callback_ack, %s. force nack.', data)
+
+            delivery_tag = method.delivery_tag
+            cb = functools.partial(
+                __long_run_ack_message, channel, delivery_tag, ack)
+            channel.connection.add_callback_threadsafe(cb)
+
+        def __long_run_ack_message(channel, delivery_tag, ack):
+            if channel.is_open:
+                try:
+                    if ack:
+                        channel.basic_ack(delivery_tag)
+                    else:
+                        channel.basic_nack(delivery_tag)
+                except:
+                    logger.exception(
+                        'Exception in ack_message, %s, %s', delivery_tag, ack)
+            else:
+                logger.error(
+                    "Channel is already closed, so we can't ACK this message, %s, %s", delivery_tag, ack)
+
+        return __long_run_callback
