@@ -274,10 +274,17 @@ class Consumer(object):
         :param data: Data received in bytes.
         """
 
-        if isinstance(data, bytes):
-            data = data.decode("ascii")
+        try:
+            if isinstance(data, bytes):
+                data = data.decode("ascii")
 
-        data = json.loads(data)
+            data = json.loads(data)
+
+        except Exception as error:
+            # ignore invalid message
+            self.__send_consume_error_message(error)
+            channel.basic_ack(delivery_tag=method.delivery_tag)
+            return
 
         auto_ack = None
 
