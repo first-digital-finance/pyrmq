@@ -72,6 +72,7 @@ class Consumer(object):
         :keyword auto_ack: Flag whether to ack or nack the consumed message regardless of its outcome. if False and callback returns None, none ack/nack is performed. Default: ``True``
         :keyword prefetch_count: How many messages should the consumer retrieve at a time for consumption. Default: ``1``
         :keyword long_run_callback: if True, runs callback in a separate thread. suitable for long running task. Default: False
+        :keyword virtual_host: queue virtual host.
         """
 
         from pyrmq import Publisher
@@ -103,6 +104,7 @@ class Consumer(object):
         self.prefetch_count = kwargs.get("prefetch_count", 1)
         self.channel = None
         self.thread = None
+        self.virtual_host = kwargs.get("virtual_host")
 
         self.connection_parameters = ConnectionParameters(
             host=self.host,
@@ -111,6 +113,8 @@ class Consumer(object):
             connection_attempts=self.connection_attempts,
             retry_delay=self.retry_delay,
         )
+        if self.virtual_host:
+            self.connection_parameters.virtual_host = self.virtual_host
 
         self.retry_queue_name = f"{self.queue_name}.{self.retry_queue_suffix}"
 
@@ -128,6 +132,8 @@ class Consumer(object):
                     "x-dead-letter-routing-key": self.routing_key,
                 },
             )
+            if self.virtual_host:
+                self.retry_publisher.connection_parameters.virtual_host = self.virtual_host
 
     def declare_queue(self) -> None:
         """
@@ -383,7 +389,7 @@ class Consumer(object):
             ack = False
             try:
                 ack = callback(data, channel=channel,
-                               method=method, properties=properties)
+                        method=method, properties=properties)
             except:
                 logger.exception(
                     'Exception on __long_run_callback_ack, %s. force nack.', data)
