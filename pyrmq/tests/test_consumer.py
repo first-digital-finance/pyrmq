@@ -9,6 +9,7 @@
 import logging
 from random import randint
 from time import sleep
+import time
 from unittest.mock import patch
 
 import pytest
@@ -401,3 +402,31 @@ def should_consume_from_the_routed_queue_as_specified_in_headers() -> None:
     second_consumer.start()
     assert_consumed_message(second_response, {"count": 1})
     second_consumer.close()
+
+
+def should_long_run_callback_in_new_thread(
+    publisher_session: Publisher,
+) -> None:
+    body = {"test": "test"}
+
+    publisher_session.publish(
+        body, message_properties={"headers": {"x-origin": "sample"}}
+    )
+
+    response = {"count": 0}
+
+    running_secs = 20
+    def long_run_callback(data: dict, **kwargs):
+        time.sleep(running_secs)
+        response["count"] = response["count"] + 1
+
+    consumer = Consumer(
+        exchange_name=publisher_session.exchange_name,
+        queue_name=publisher_session.queue_name,
+        routing_key=publisher_session.routing_key,
+        callback=long_run_callback,
+        long_run_callback=True,
+    )
+    consumer.start()
+    assert_consumed_message(response, {"count": 1}, tries=-100, retry_after=1)
+    consumer.close()
