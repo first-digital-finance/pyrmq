@@ -1,6 +1,7 @@
 <!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
   <h1>PyRMQ</h1>
+  <a href="https://pypi.org/project/PyRMQ/"><img alt="PyPI" src="https://img.shields.io/pypi/v/pyrmq?style=for-the-badge"></a>
   <a href="https://pyrmq.readthedocs.io"><img src='https://readthedocs.org/projects/pyrmq/badge/?version=latest&style=for-the-badge' alt='Documentation Status' /></a>
   <a href="https://codecov.io/gh/first-digital-finance/pyrmq"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/first-digital-finance/pyrmq/master.svg?style=for-the-badge"></a>
   <a href="https://pypi.org/project/PyRMQ/"><img alt="Supports Python >= 3.8" src="https://img.shields.io/pypi/pyversions/pyrmq?style=for-the-badge"/></a>
