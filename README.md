@@ -1,11 +1,11 @@
 <!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
   <h1>PyRMQ</h1>
-  <a href="https://github.com/first-digital-finance/pyrmq"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/altusgerona/pyrmq/Upload%20PyRMQ%20to%20PyPI?style=for-the-badge"></a>
+  <a href="https://github.com/first-digital-finance/pyrmq"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/first-digital-finance/pyrmq/testing.yml?branch=master&style=for-the-badge"></a>
   <a href="https://pypi.org/project/PyRMQ/"><img alt="PyPI" src="https://img.shields.io/pypi/v/pyrmq?style=for-the-badge"></a>
   <a href="https://pyrmq.readthedocs.io"><img src='https://readthedocs.org/projects/pyrmq/badge/?version=latest&style=for-the-badge' alt='Documentation Status' /></a>
   <a href="https://codecov.io/gh/first-digital-finance/pyrmq"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/first-digital-finance/pyrmq/master.svg?style=for-the-badge"></a>
-  <a href="https://pypi.org/project/PyRMQ/"><img alt="Supports Python >= 3.6" src="https://img.shields.io/pypi/pyversions/pyrmq?style=for-the-badge"/></a>
+  <a href="https://pypi.org/project/PyRMQ/"><img alt="Supports Python >= 3.8" src="https://img.shields.io/pypi/pyversions/pyrmq?style=for-the-badge"/></a>
   <a href="https://mit-license.org" target="_blank"><img src="https://img.shields.io/badge/license-MIT-blue.svg?longCache=true&style=for-the-badge" alt="License"></a> 
   <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg?longCache=true&style=for-the-badge"></a>
   <a href="https://github.com/PyCQA/isort"><img alt="Imports: isort" src="https://img.shields.io/badge/%20imports-isort-%231674b1?style=for-the-badge&labelColor=ef8336)](https://pycqa.github.io/isort/"></a>
