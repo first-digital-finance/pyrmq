@@ -70,7 +70,7 @@ class Consumer(object):
         :keyword bound_exchange: The exchange this consumer needs to bind to. This is an object that has two keys, ``name`` and ``type``. Default: ``None``
         :keyword auto_ack: Flag whether to ack or nack the consumed message regardless of its outcome. Default: ``True``
         :keyword prefetch_count: How many messages should the consumer retrieve at a time for consumption. Default: ``1``
-        :keyword heartbeat: Heartbeat seconds to wait for consumer process. Default: ``None``
+        :keyword heart_beat: Heartbeat seconds to wait for consumer process. Default: ``None``
         """
 
         from pyrmq import Publisher
@@ -98,7 +98,7 @@ class Consumer(object):
         self.bound_exchange = kwargs.get("bound_exchange")
         self.auto_ack = kwargs.get("auto_ack", True)
         self.prefetch_count = kwargs.get("prefetch_count", 1)
-        self.heartbeat = kwargs.get("heartbeat", None)
+        self.heart_beat = kwargs.get("heart_beat", None)
         self.channel = None
         self.thread = None
 
@@ -108,7 +108,7 @@ class Consumer(object):
             credentials=PlainCredentials(self.username, self.password),
             connection_attempts=self.connection_attempts,
             retry_delay=self.retry_delay,
-            heartbeat=self.heartbeat,
+            heartbeat=self.heart_beat,
         )
 
         self.retry_queue_name = f"{self.queue_name}.{self.retry_queue_suffix}"
