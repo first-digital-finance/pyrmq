@@ -1,3 +1,10 @@
+## [3.4.3](https://github.com/first-digital-finance/pyrmq/compare/v3.4.2...v3.4.3) (2023-11-03)
+
+
+### Bug Fixes
+
+* **pyrmq.consumer:** add heartbeat kwargs for pika heartbeat config ([317c8ee](https://github.com/first-digital-finance/pyrmq/commit/317c8ee0f2936d9216506c21068ff3c75e4ae2b1))
+
 ## [3.4.2](https://github.com/first-digital-finance/pyrmq/compare/v3.4.1...v3.4.2) (2022-09-15)
 
 
