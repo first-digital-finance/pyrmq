@@ -1,3 +1,10 @@
+## [3.4.4](https://github.com/first-digital-finance/pyrmq/compare/v3.4.3...v3.4.4) (2023-11-03)
+
+
+### Bug Fixes
+
+* **pyrmq.consumer:** fix heartbeat kwargs conflict with pika ([a11e7ce](https://github.com/first-digital-finance/pyrmq/commit/a11e7cefb7890dd33b1970606fd11aa3e7eed7b0))
+
 ## [3.4.3](https://github.com/first-digital-finance/pyrmq/compare/v3.4.2...v3.4.3) (2023-11-03)
 
 
