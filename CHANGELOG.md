@@ -1,3 +1,10 @@
+## [3.4.5](https://github.com/first-digital-finance/pyrmq/compare/v3.4.4...v3.4.5) (2024-09-10)
+
+
+### Bug Fixes
+
+* update encoder to utf-8 ([#81](https://github.com/first-digital-finance/pyrmq/issues/81)) ([5857829](https://github.com/first-digital-finance/pyrmq/commit/585782953a5fbe6ef8ec597d89880879007502e4))
+
 ## [3.4.4](https://github.com/first-digital-finance/pyrmq/compare/v3.4.3...v3.4.4) (2023-11-03)
 
 
