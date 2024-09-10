@@ -1,15 +1,14 @@
 name: Upload PyRMQ to PyPI
 
 on: workflow_dispatch
-  # workflow_run:
-  #   workflows: ["Test across Python versions"]
-  #   branches: [master]
-  #   types:
-  #     - completed
+# workflow_run:
+#   workflows: ["Test across Python versions"]
+#   branches: [master]
+#   types:
+#     - completed
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -19,7 +18,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: "3.12"
 
       - name: Install project dependencies
         run: |
@@ -29,7 +28,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "20"
 
       - name: Run semantic-release
         env:
