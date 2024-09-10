@@ -1,15 +1,16 @@
 """
-    Python with RabbitMQ—simplified so you won't have to.
+Python with RabbitMQ—simplified so you won't have to.
 
-    :copyright: 2020-Present by Alexandre Gerona.
-    :license: MIT, see LICENSE for more details.
+:copyright: 2020-Present by Alexandre Gerona.
+:license: MIT, see LICENSE for more details.
 
-    Full documentation is available at https://pyrmq.readthedocs.io
+Full documentation is available at https://pyrmq.readthedocs.io
 """
+
 import logging
 from random import randint
 from time import sleep
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from pika.exceptions import AMQPConnectionError
@@ -401,3 +402,21 @@ def should_consume_from_the_routed_queue_as_specified_in_headers() -> None:
     second_consumer.start()
     assert_consumed_message(second_response, {"count": 1})
     second_consumer.close()
+
+
+def should_consume_message_utf8_decoding(publisher_session: Publisher):
+    consumer = Consumer(
+        exchange_name=publisher_session.exchange_name,
+        queue_name=publisher_session.queue_name,
+        routing_key=publisher_session.routing_key,
+        callback=Mock(),
+    )
+
+    data = b'{"key": "value\xe2\x80\xac"}'
+
+    mock_channel = Mock()
+    mock_method = Mock()
+    mock_method.delivery_tag = "test_tag"
+    mock_properties = Mock()
+
+    consumer._consume_message(mock_channel, mock_method, mock_properties, data)

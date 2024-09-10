@@ -209,8 +209,8 @@ User Guide
     Testing <testing>
 
 .. _pika: https://pypi.org/project/pika/
-.. _default initialization settings: https://hub.docker.com/_/rabbitmq)
+.. _default initialization settings: https://hub.docker.com/_/rabbitmq
 .. _PyPI: https://pypi.org/project/PyRMQ/
 .. _here: https://www.rabbitmq.com/priority.html
-.. _RabbitMQ does not remove expired messages that aren't at the head of the queue: https://www.rabbitmq.com/ttl.html#per-message-ttl-caveats
+.. _RabbitMQ does not remove expired messages that aren't at the head of the queue: https://www.rabbitmq.com/ttl.html
 .. _e2e bindings: https://www.rabbitmq.com/e2e.html

@@ -278,7 +278,7 @@ class Consumer(object):
         """
 
         if isinstance(data, bytes):
-            data = data.decode("ascii")
+            data = data.decode("utf-8", errors="replace")
 
         data = json.loads(data)
 
