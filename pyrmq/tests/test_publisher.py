@@ -151,6 +151,46 @@ def should_handle_different_ident():
             publisher.publish({})
 
 
+def should_publish_with_classic_queue():
+    """Test that publishing works correctly when classic_queue is set to True."""
+    classic_queue_name = "classic_test_queue"
+    
+    # Create a publisher with classic_queue=True
+    publisher = Publisher(
+        exchange_name=TEST_EXCHANGE_NAME,
+        queue_name=classic_queue_name,
+        routing_key=TEST_ROUTING_KEY,
+        classic_queue=True,
+    )
+    
+    # Publish a message
+    test_message = {"test": "classic_queue_test"}
+    publisher.publish(test_message)
+    
+    # Verify the message was published by consuming it
+    response = {}
+    
+    def callback(data, **kwargs):
+        response.update(data)
+    
+    consumer = Consumer(
+        exchange_name=TEST_EXCHANGE_NAME,
+        queue_name=classic_queue_name,
+        routing_key=TEST_ROUTING_KEY,
+        callback=callback,
+        classic_queue=True,
+    )
+    
+    consumer.start()
+    assert_consumed_message(response, test_message)
+    consumer.close()
+    
+    # Clean up
+    channel = publisher.connect()
+    channel.queue_purge(classic_queue_name)
+    channel.queue_delete(classic_queue_name)
+
+
 def should_publish_to_the_routed_queue_as_specified_in_headers():
     """
     This creates two queues, `first_queue` and `second_queue`
