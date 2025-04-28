@@ -87,6 +87,7 @@ class Publisher(object):
         self.retry_delay = kwargs.get("retry_delay", 5)
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry", False)
+        self.auto_create = kwargs.get("auto_create", True)
         self.exchange_args = kwargs.get("exchange_args")
         self.queue_args = kwargs.get("queue_args")
 
@@ -96,7 +97,7 @@ class Publisher(object):
             credentials=PlainCredentials(self.username, self.password),
             connection_attempts=self.connection_attempts,
             retry_delay=self.retry_delay,
-        )
+        )      
 
         self.connections = {}
 
@@ -133,18 +134,24 @@ class Publisher(object):
         Declare and bind a channel to a queue.
         :param channel: pika Channel
         """
+        passive = False if self.auto_create else True
+
         channel.exchange_declare(
             exchange=self.exchange_name,
             durable=True,
             exchange_type=self.exchange_type,
             arguments=self.exchange_args,
+            passive=passive,
         )
 
         if not self.queue_name or not self.routing_key:
             return
 
         channel.queue_declare(
-            queue=self.queue_name, arguments=self.queue_args, durable=True
+            queue=self.queue_name,
+            arguments=self.queue_args,
+            durable=True,
+            passive=passive,
         )
         channel.queue_bind(
             queue=self.queue_name,
