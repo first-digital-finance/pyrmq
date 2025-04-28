@@ -10,7 +10,7 @@ from typing import Dict
 from unittest.mock import PropertyMock, patch
 
 import pytest
-from pika.exceptions import AMQPChannelError, AMQPConnectionError
+from pika.exceptions import AMQPChannelError, AMQPConnectionError, ChannelClosedByBroker
 
 from pyrmq import Consumer, Publisher
 from pyrmq.publisher import CONNECT_ERROR
@@ -103,6 +103,18 @@ def should_handle_exception_from_error_callback():
                 publisher.publish(body)
 
     assert sleep.call_count == publisher.connection_attempts - 1
+
+
+def should_throw_error_on_non_existing_exchange_or_queue():
+    publisher = Publisher(
+        exchange_name="non_existing_exchange",
+        queue_name="non_existing_queue",
+        routing_key="non_existing_routing_key",
+        auto_create=False,
+    )
+
+    with pytest.raises(ChannelClosedByBroker):
+        publisher.publish({})
 
 
 def should_handle_infinite_retry():
