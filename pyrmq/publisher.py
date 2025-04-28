@@ -97,7 +97,7 @@ class Publisher(object):
             credentials=PlainCredentials(self.username, self.password),
             connection_attempts=self.connection_attempts,
             retry_delay=self.retry_delay,
-        )      
+        )
 
         self.queue_args["x-queue-type"] = "quorum"
         if kwargs.get("classic_queue") or "x-max-priority" in self.queue_args:

@@ -106,6 +106,7 @@ def should_handle_exception_from_error_callback():
 
 
 def should_throw_error_on_non_existing_exchange_or_queue():
+    """Test that an exception is raised when trying to publish to a non-existing exchange or queue with auto_create=False."""
     publisher = Publisher(
         exchange_name="non_existing_exchange",
         queue_name="non_existing_queue",
@@ -154,7 +155,7 @@ def should_handle_different_ident():
 def should_publish_with_classic_queue():
     """Test that publishing works correctly when classic_queue is set to True."""
     classic_queue_name = "classic_test_queue"
-    
+
     # Create a publisher with classic_queue=True
     publisher = Publisher(
         exchange_name=TEST_EXCHANGE_NAME,
@@ -162,17 +163,17 @@ def should_publish_with_classic_queue():
         routing_key=TEST_ROUTING_KEY,
         classic_queue=True,
     )
-    
+
     # Publish a message
     test_message = {"test": "classic_queue_test"}
     publisher.publish(test_message)
-    
+
     # Verify the message was published by consuming it
     response = {}
-    
+
     def callback(data, **kwargs):
         response.update(data)
-    
+
     consumer = Consumer(
         exchange_name=TEST_EXCHANGE_NAME,
         queue_name=classic_queue_name,
@@ -180,11 +181,11 @@ def should_publish_with_classic_queue():
         callback=callback,
         classic_queue=True,
     )
-    
+
     consumer.start()
     assert_consumed_message(response, test_message)
     consumer.close()
-    
+
     # Clean up
     channel = publisher.connect()
     channel.queue_purge(classic_queue_name)

@@ -13,7 +13,7 @@ from time import sleep
 from unittest.mock import Mock, patch
 
 import pytest
-from pika.exceptions import AMQPConnectionError
+from pika.exceptions import AMQPConnectionError, ChannelClosedByBroker
 
 from pyrmq import Consumer, Publisher
 from pyrmq.consumer import CONNECT_ERROR, CONSUME_ERROR
@@ -290,6 +290,24 @@ def should_retry_up_to_max_retries_with_proper_headers_with_dlk_retry_enabled(
     consumer.close()
 
 
+def should_throw_error_on_non_existing_exchange_or_queue():
+    """Test that an exception is raised when trying to consume from a non-existing exchange or queue with auto_create=False."""
+
+    def callback(data, **kwargs):
+        pass  # pragma no cover
+
+    consumer = Consumer(
+        exchange_name="non_existing_exchange",
+        queue_name="non_existing_queue",
+        routing_key="non_existing_routing_key",
+        callback=callback,
+        auto_create=False,
+    )
+
+    with pytest.raises(ChannelClosedByBroker):
+        consumer.start()
+
+
 def assert_consumed_infinite_loop(response, expected, tries=0, retry_after=0.6):
     if response == expected or tries > 5:
         assert response["count"] > expected["count"]
@@ -341,7 +359,7 @@ def should_nack_message_when_callback_method_returns_false(
     )
 
     consumer.start()
-    assert_consumed_infinite_loop(response, {"count": 1})
+    assert_consumed_infinite_loop(new_response, {"count": 1})
     consumer.close()
 
 
@@ -425,7 +443,7 @@ def should_consume_message_utf8_decoding(publisher_session: Publisher):
 def should_consume_with_classic_queue():
     """Test that consuming works correctly when classic_queue is set to True."""
     classic_queue_name = "classic_consumer_test_queue"
-    
+
     # Create a publisher to send a message
     publisher = Publisher(
         exchange_name=TEST_EXCHANGE_NAME,
@@ -433,17 +451,17 @@ def should_consume_with_classic_queue():
         routing_key=TEST_ROUTING_KEY,
         classic_queue=True,
     )
-    
+
     # Publish a test message
     test_message = {"test": "classic_consumer_test"}
     publisher.publish(test_message)
-    
+
     # Create a consumer with classic_queue=True
     response = {}
-    
+
     def callback(data, **kwargs):
         response.update(data)
-    
+
     consumer = Consumer(
         exchange_name=TEST_EXCHANGE_NAME,
         queue_name=classic_queue_name,
@@ -451,12 +469,12 @@ def should_consume_with_classic_queue():
         callback=callback,
         classic_queue=True,
     )
-    
+
     # Start consuming and verify the message is received
     consumer.start()
     assert_consumed_message(response, test_message)
     consumer.close()
-    
+
     # Clean up
     channel = publisher.connect()
     channel.queue_purge(classic_queue_name)
