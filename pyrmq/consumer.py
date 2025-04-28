@@ -94,7 +94,7 @@ class Consumer(object):
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry", False)
         self.exchange_args = kwargs.get("exchange_args")
-        self.queue_args = kwargs.get("queue_args")
+        self.queue_args = kwargs.get("queue_args", {})
         self.bound_exchange = kwargs.get("bound_exchange")
         self.auto_ack = kwargs.get("auto_ack", True)
         self.prefetch_count = kwargs.get("prefetch_count", 1)
@@ -111,7 +111,11 @@ class Consumer(object):
             heartbeat=self.heart_beat,
         )
 
-        self.retry_queue_name = f"{self.queue_name}.{self.retry_queue_suffix}"
+        self.queue_args["x-queue-type"] = "quorum"
+        if kwargs.get("classic_queue") or "x-max-priority" in self.queue_args:
+            self.queue_args["x-queue-type"] = "classic"
+
+        self.retry_queue_name = f"{self.queue_name}.{self.retry_queue_suffix}" 
 
         if self.is_dlk_retry_enabled:
             self.retry_publisher = Publisher(

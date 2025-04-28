@@ -89,7 +89,7 @@ class Publisher(object):
         self.infinite_retry = kwargs.get("infinite_retry", False)
         self.auto_create = kwargs.get("auto_create", True)
         self.exchange_args = kwargs.get("exchange_args")
-        self.queue_args = kwargs.get("queue_args")
+        self.queue_args = kwargs.get("queue_args", {})
 
         self.connection_parameters = ConnectionParameters(
             host=self.host,
@@ -98,6 +98,10 @@ class Publisher(object):
             connection_attempts=self.connection_attempts,
             retry_delay=self.retry_delay,
         )      
+
+        self.queue_args["x-queue-type"] = "quorum"
+        if kwargs.get("classic_queue") or "x-max-priority" in self.queue_args:
+            self.queue_args["x-queue-type"] = "classic"
 
         self.connections = {}
 
