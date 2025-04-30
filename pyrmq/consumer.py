@@ -93,7 +93,6 @@ class Consumer(object):
         self.max_retries = kwargs.get("max_retries", 20)
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry", False)
-        self.auto_create = kwargs.get("auto_create", True)
         self.exchange_args = kwargs.get("exchange_args")
         self.queue_args = kwargs.get("queue_args", {})
         self.bound_exchange = kwargs.get("bound_exchange")
@@ -137,21 +136,18 @@ class Consumer(object):
         """
         Declare and bind a channel to a queue.
         """
-        passive = False if self.auto_create else True
 
         self.channel.exchange_declare(
             exchange=self.exchange_name,
             durable=True,
             exchange_type=self.exchange_type,
             arguments=self.exchange_args,
-            passive=passive,
         )
 
         self.channel.queue_declare(
             queue=self.queue_name,
             arguments=self.queue_args,
             durable=True,
-            passive=passive,
         )
         self.channel.queue_bind(
             queue=self.queue_name,
