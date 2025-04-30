@@ -154,7 +154,7 @@ def should_handle_different_ident():
 
 def should_publish_with_classic_queue():
     """Test that publishing works correctly when classic_queue is set to True."""
-    classic_queue_name = "classic_test_queue"
+    classic_queue_name = "classic_publisher_test_queue"
 
     # Create a publisher with classic_queue=True
     publisher = Publisher(
@@ -165,7 +165,7 @@ def should_publish_with_classic_queue():
     )
 
     # Publish a message
-    test_message = {"test": "classic_queue_test"}
+    test_message = {"test": "classic_publisher_test"}
     publisher.publish(test_message)
 
     # Verify the message was published by consuming it

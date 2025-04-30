@@ -360,6 +360,47 @@ def should_nack_message_when_callback_method_returns_false(
     channel.queue_delete(queue_name)
 
 
+def should_consume_with_classic_queue():
+    """Test that consuming works correctly when classic_queue is set to True."""
+    classic_queue_name = "classic_consumer_test_queue"
+
+    # Create a publisher to send a message
+    publisher = Publisher(
+        exchange_name=TEST_EXCHANGE_NAME,
+        queue_name=classic_queue_name,
+        routing_key=TEST_ROUTING_KEY,
+        classic_queue=True,
+    )
+
+    # Publish a test message
+    test_message = {"test": "classic_consumer_test"}
+    publisher.publish(test_message)
+
+    # Create a consumer with classic_queue=True
+    response = {}
+
+    def callback(data, **kwargs):
+        response.update(data)
+
+    consumer = Consumer(
+        exchange_name=TEST_EXCHANGE_NAME,
+        queue_name=classic_queue_name,
+        routing_key=TEST_ROUTING_KEY,
+        callback=callback,
+        classic_queue=True,
+    )
+
+    # Start consuming and verify the message is received
+    consumer.start()
+    assert_consumed_message(response, test_message)
+    consumer.close()
+
+    # Clean up
+    channel = publisher.connect()
+    channel.queue_purge(classic_queue_name)
+    channel.queue_delete(classic_queue_name)
+
+
 def should_consume_from_the_routed_queue_as_specified_in_headers() -> None:
     bound_exchange_name = "headers_exchange_name"
     routing_key = "headers_routing_key"
