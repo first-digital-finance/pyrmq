@@ -19,7 +19,7 @@ TEST_ROUTING_KEY = "test_routing_key"
 TEST_PRIORITY_EXCHANGE_NAME = "sample_priority_exchange"
 TEST_PRIORITY_QUEUE_NAME = "sample_priority_queue_name"
 TEST_PRIORITY_ROUTING_KEY = "sample_priority_routing_key"
-TEST_PRIORITY_ARGUMENTS = {"x-max-priority": 5}
+TEST_PRIORITY_ARGUMENTS = {"x-max-priority": 5, "x-queue-type": "classic"}
 
 
 @pytest.fixture(scope="session")

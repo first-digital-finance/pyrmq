@@ -170,9 +170,23 @@ to alleviate the need to declare your bound exchange manually.
 
 | :warning: Important                                                                                |
 |:---------------------------------------------------------------------------------------------------|
-Since this method uses [e2e bindings](https://www.rabbitmq.com/e2e.html), if you're using a headers exchange to bind
-your consumer to, they _and_ your publisher must all have the same routing key to route the messages properly. This
-is not needed for exchange to queue bindings as the routing key is optional for those.
+Since this method uses [e2e bindings](https://www.rabbitmq.com/e2e.html), if you're using a headers exchange to bind your consumer to, they _and_ your publisher must all have the same routing key to route the messages properly. This is not needed for exchange to queue bindings as the routing key is optional for those.
+
+#### Declaring _classic_ queues
+
+The default queue type when declaring is quorum which has the advantage of data replication and being highly available. Though these features fit better for highly distributed enterprise systems, it may not fit your certain requirements. You may read more about the differences between the classic and quorum queue types in the official [documentation](https://www.rabbitmq.com/docs/quorum-queues).
+
+To configure your queue to classic, simply instantiate your queue with the queue argument `x-queue-type` and set its value to `classic`.
+```python
+from pyrmq import Publisher
+publisher = Publisher(
+    exchange_name="exchange_name",
+    queue_name="queue_name",
+    routing_key="routing_key",
+    queue_args={"x-queue-type": "classic"},
+)
+```
+
 
 ## Documentation
 Visit https://pyrmq.readthedocs.io for the most up-to-date documentation.
