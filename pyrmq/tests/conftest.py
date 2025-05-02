@@ -23,7 +23,7 @@ TEST_PRIORITY_ROUTING_KEY = "sample_priority_routing_key"
 TEST_PRIORITY_ARGUMENTS = {"x-max-priority": 5, "x-queue-type": "classic"}
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def publisher():
     publisher = Publisher(
         exchange_name=TEST_EXCHANGE_NAME,
@@ -33,7 +33,7 @@ def publisher():
     return publisher
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def priority_publisher():
     publisher = Publisher(
         exchange_name=TEST_PRIORITY_EXCHANGE_NAME,
@@ -100,10 +100,64 @@ def priority_session(priority_publisher: Publisher):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def clean_specific_queues(priority_publisher: Publisher):
-    channel = priority_publisher.connect()
-    channel.queue_delete("first_queue")
-    channel.queue_delete("second_queue")
-    channel.exchange_delete("first_exchange")
-    channel.exchange_delete("second_exchange")
-    channel.exchange_delete("headers_exchange_name")
+def clean_specific_queues():
+    """Clean up specific resources before each test to ensure isolation."""
+    from pyrmq import Consumer
+
+    # Create a consumer for cleanup only
+    consumer = Consumer(
+        exchange_name="cleanup_exchange",
+        queue_name="cleanup_queue",
+        routing_key="cleanup_key",
+        callback=lambda x: x,
+    )
+
+    # Connect to get a channel
+    channel = consumer.connect()
+
+    # Clean up exchanges and queues - only delete, don't create
+    with suppress(Exception):
+        # Delete test queues
+        for queue in [
+            "first_queue",
+            "second_queue",
+            "publisher_first_queue",
+            "publisher_second_queue",
+            "test_queue_name",
+            TEST_QUEUE_NAME,
+            TEST_PRIORITY_QUEUE_NAME,
+            "classic_publisher_test_queue",
+            "classic_consumer_test_queue",
+            "nack_queue_name",
+            "quorum_priority_test_queue",
+            "temp_queue",
+        ]:
+            try:
+                channel.queue_delete(queue)
+            except Exception:
+                pass
+
+        # Delete test exchanges
+        for exchange in [
+            "first_exchange",
+            "second_exchange",
+            "headers_exchange_name",
+            "test_headers_exchange",
+            TEST_EXCHANGE_NAME,
+            TEST_PRIORITY_EXCHANGE_NAME,
+            "nack_exchange_name",
+            "isolated_exchange",
+            "quorum_priority_exchange",
+        ]:
+            try:
+                # Skip deleting default exchanges
+                if exchange not in [
+                    "",
+                    "amq.direct",
+                    "amq.fanout",
+                    "amq.topic",
+                    "amq.headers",
+                ]:
+                    channel.exchange_delete(exchange)
+            except Exception:
+                pass
