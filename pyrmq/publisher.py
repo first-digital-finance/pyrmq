@@ -27,6 +27,7 @@ from pika.exceptions import (
     AMQPConnectionError,
     ChannelClosedByBroker,
     StreamLostError,
+    UnroutableError,
 )
 from pika.spec import PERSISTENT_DELIVERY_MODE
 
@@ -46,8 +47,12 @@ logger = logging.getLogger("pyrmq")
 
 class Publisher(object):
     """
-    This class uses a ``BlockingConnection`` from pika that automatically handles
-    queue declarations and bindings plus retry logic built for its connection and publishing.
+    This class uses a ``BlockingConnection`` from pika for publishing messages to RabbitMQ.
+
+    Important Note:
+    This class does not declare or bind queues. It only verifies that exchanges exist but will not
+    create them. Consumers should declare exchanges and queues before publishers attempt to use them.
+    If you try to publish to a non-existent exchange, a ChannelClosedByBroker exception will be raised.
     """
 
     def __init__(
@@ -59,10 +64,10 @@ class Publisher(object):
         **kwargs,
     ):
         """
-        :param exchange_name: Your exchange name.
-        :param queue_name: Your queue name.
-        :param routing_key: Your queue name.
-        :param exchange_type: Exchange type to declare. Default: ``"direct"``
+        :param exchange_name: The exchange name to publish to (must already exist).
+        :param queue_name: The queue name (used only for routing key if routing_key is empty).
+        :param routing_key: The routing key for message delivery. If blank, queue_name is used.
+        :param exchange_type: Exchange type to verify. Default: ``"direct"``
         :keyword host: Your RabbitMQ host. Checks env var ``RABBITMQ_HOST``. Default: ``"localhost"``
         :keyword port: Your RabbitMQ port. Checks env var ``RABBITMQ_PORT``. Default: ``5672``
         :keyword username: Your RabbitMQ username. Default: ``"guest"``
@@ -71,8 +76,12 @@ class Publisher(object):
         :keyword retry_delay: Seconds between connection retries. Default: ``5``
         :keyword error_callback: Callback function to be called when connection_attempts is reached.
         :keyword infinite_retry: Tells PyRMQ to keep on retrying to publish while firing error_callback, if any. Default: ``False``
-        :keyword exchange_args: Your exchange arguments. Default: ``None``
-        :keyword queue_args: Your queue arguments. Default: ``None``
+        :keyword exchange_args: Exchange arguments for verification. Default: ``None``
+        :keyword queue_args: Queue arguments for message properties. Default: ``{}``
+
+        .. note::
+           This class no longer creates queues or exchanges. The exchange must exist before publishing,
+           and the Consumer class should be used to declare exchanges and queues.
         """
 
         self.exchange_name = exchange_name
@@ -87,7 +96,6 @@ class Publisher(object):
         self.retry_delay = kwargs.get("retry_delay", 5)
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry", False)
-        self.auto_create = kwargs.get("auto_create", True)
         self.exchange_args = kwargs.get("exchange_args")
         self.queue_args = kwargs.get("queue_args", {})
 
@@ -132,48 +140,35 @@ class Publisher(object):
         """
         return BlockingConnection(self.connection_parameters)
 
-    def declare_queue(self, channel) -> None:
+    def verify_exchange(self, channel) -> None:
         """
-        Declare and bind a channel to a queue.
-        :param channel: pika Channel
-        """
-        passive = False if self.auto_create else True
+        Verifies that an exchange exists using passive mode.
+        This will raise an exception if the exchange doesn't exist.
 
+        :param channel: pika Channel
+        :raises: ChannelClosedByBroker if the exchange doesn't exist
+        """
+        # Always use passive mode to only check if exchange exists
         channel.exchange_declare(
             exchange=self.exchange_name,
             durable=True,
             exchange_type=self.exchange_type,
             arguments=self.exchange_args,
-            passive=passive,
-        )
-
-        if not self.queue_name or not self.routing_key:
-            return
-
-        channel.queue_declare(
-            queue=self.queue_name,
-            arguments=self.queue_args,
-            durable=True,
-            passive=passive,
-        )
-        channel.queue_bind(
-            queue=self.queue_name,
-            exchange=self.exchange_name,
-            routing_key=self.routing_key,
-            arguments=self.queue_args,
+            passive=True,  # Only check if exchange exists, don't create it
         )
 
     def connect(self, retry_count=1) -> BlockingChannel:
         """
-        Create pika's ``BlockingConnection`` and initialize queue bindings.
+        Create pika's ``BlockingConnection`` and verify the exchange exists.
         :param retry_count: Amount retries the Publisher tried before sending an error message.
+        :raises: ChannelClosedByBroker if the exchange doesn't exist
         """
         try:
             connection = self.__create_connection()
             channel = connection.channel()
             channel.confirm_delivery()
 
-            self.declare_queue(channel)
+            self.verify_exchange(channel)
 
             return channel
 
@@ -193,16 +188,17 @@ class Publisher(object):
     def publish(
         self,
         data: dict,
-        priority: Optional[int] = None,
         message_properties: Optional[dict] = None,
+        is_priority: bool = False,
         attempt: int = 0,
         retry_count: int = 1,
     ) -> None:
         """
         Publish data to RabbitMQ.
         :param data: Data to be published.
-        :param priority: Message priority. Only works if ``x-max-priority`` is defined as queue argument.
-        :param message_properties: Message properties. Default: ``{"delivery_mode": 2}``
+        :param message_properties: Message properties. Default: ``{"delivery_mode": 2}``.
+            For classic queues with the ``x-max-priority`` argument, use ``{"priority": N}``.
+        :param is_priority: For quorum queues, marks the message as high priority when True.
         :param attempt: Number of attempts made.
         :param retry_count: Amount retries the Publisher tried before sending an error message.
         """
@@ -210,19 +206,36 @@ class Publisher(object):
 
         try:
             message_properties = message_properties or {}
+
+            # Handle priorities for quorum queues
+            if is_priority:
+                # For quorum queues, high priority is 5-255 (we use 5)
+                # Messages with priority 0-4 are normal priority (0 is default)
+                message_properties["priority"] = 5
+
             basic_properties_kwargs = {
                 "delivery_mode": PERSISTENT_DELIVERY_MODE,
-                "priority": priority,
                 **message_properties,
             }
 
-            channel.basic_publish(
-                exchange=self.exchange_name,
-                routing_key=self.routing_key,
-                body=json.dumps(data),
-                properties=BasicProperties(**basic_properties_kwargs),
-                mandatory=True,
-            )
+            try:
+                channel.basic_publish(
+                    exchange=self.exchange_name,
+                    routing_key=self.routing_key
+                    or self.queue_name,  # Fall back to queue_name if routing_key is empty
+                    body=json.dumps(data),
+                    properties=BasicProperties(**basic_properties_kwargs),
+                    mandatory=True,
+                )
+            except UnroutableError:
+                # When a message is published with mandatory=True but can't be routed
+                # This might happen if the queue doesn't exist or isn't bound to the exchange
+                logger.warning(
+                    f"Message could not be routed to any queue. Exchange: {self.exchange_name}, "
+                    f"Routing key: {self.routing_key or self.queue_name}"
+                )
+                # Re-raise to maintain backward compatibility
+                raise
 
         except CONNECTION_ERRORS as error:
             if not (retry_count % self.connection_attempts):

@@ -179,13 +179,17 @@ def should_handle_error_when_consuming(publisher_session: Publisher):
             consumer.close()
 
 
-def should_get_message_with_higher_priority(priority_session: Publisher):
+def should_get_message_with_higher_priority_in_classic_queue(
+    priority_session: Publisher,
+):
+    """Test that messages with higher priority are delivered first in classic queues."""
     test_data = []
 
     for i in range(0, 10):
         rand_int = randint(0, 255)
         body = {"test": f"test{rand_int}", "priority": rand_int}
-        priority_session.publish(body, priority=rand_int)
+        # Use message_properties for sending priority
+        priority_session.publish(body, message_properties={"priority": rand_int})
         test_data.append(body)
     response = {}
 
@@ -305,6 +309,22 @@ def should_nack_message_when_callback_method_returns_false(
 ) -> None:
     queue_name = "nack_queue_name"
     queue_args = {"x-delivery-limit": -1}
+
+    # Create a consumer first to set up the queue
+    def dummy_callback(data, **kwargs):
+        pass  # pragma: no cover
+
+    dummy_consumer = Consumer(
+        exchange_name="nack_exchange_name",
+        queue_name=queue_name,
+        routing_key="nack_routing_key",
+        callback=dummy_callback,
+        queue_args=queue_args,
+    )
+    dummy_consumer.connect()
+    dummy_consumer.declare_queue()
+
+    # Now create the publisher
     publisher = Publisher(
         exchange_name="nack_exchange_name",
         queue_name=queue_name,
@@ -363,6 +383,20 @@ def should_nack_message_when_callback_method_returns_false(
 def should_consume_with_classic_queue():
     """Test that consuming works correctly using a classic queue"""
     classic_queue_name = "classic_consumer_test_queue"
+
+    # Create a consumer first to set up the queue
+    def dummy_callback(data, **kwargs):
+        pass  # pragma: no cover
+
+    dummy_consumer = Consumer(
+        exchange_name=TEST_EXCHANGE_NAME,
+        queue_name=classic_queue_name,
+        routing_key=TEST_ROUTING_KEY,
+        callback=dummy_callback,
+        queue_args={"x-queue-type": "classic"},
+    )
+    dummy_consumer.connect()
+    dummy_consumer.declare_queue()
 
     # Create a publisher to send a message
     publisher = Publisher(
@@ -476,3 +510,105 @@ def should_consume_message_utf8_decoding(publisher_session: Publisher):
     mock_properties = Mock()
 
     consumer._consume_message(mock_channel, mock_method, mock_properties, data)
+
+
+def should_respect_priority_ratio_in_quorum_queue():
+    """
+    Test that quorum queues respect the 2:1 ratio for high priority messages.
+
+    This test publishes 4 messages in the following order:
+    1. Normal priority
+    2. High priority
+    3. High priority
+    4. High priority
+
+    Expected consumption order should be:
+    1. High priority
+    2. High priority
+    3. Normal priority (due to 2:1 ratio)
+    4. High priority
+    """
+    # Create a unique queue name for this test
+    queue_name = "quorum_priority_test_queue"
+    exchange_name = "quorum_priority_exchange"
+    routing_key = "quorum_priority_routing_key"
+
+    # Create a publisher
+    publisher = Publisher(
+        exchange_name=exchange_name,
+        queue_name=queue_name,
+        routing_key=routing_key,
+    )
+
+    # Create a consumer first to ensure the queue exists
+    consumed_messages = []
+
+    def callback(data, **kwargs):
+        consumed_messages.append(data)
+
+    consumer = Consumer(
+        exchange_name=exchange_name,
+        queue_name=queue_name,
+        routing_key=routing_key,
+        callback=callback,
+    )
+
+    try:
+        # Declare queue before publishing
+        channel = consumer.connect()
+        consumer.declare_queue()
+
+        # Publish messages in this order: normal, high, high, high
+        publisher.publish({"id": 1, "priority": "normal"})  # Normal priority
+        publisher.publish(
+            {"id": 2, "priority": "high"}, is_priority=True
+        )  # High priority
+        publisher.publish(
+            {"id": 3, "priority": "high"}, is_priority=True
+        )  # High priority
+        publisher.publish(
+            {"id": 4, "priority": "high"}, is_priority=True
+        )  # High priority
+
+        # Start consuming
+        consumer.start()
+
+        # Wait for all messages to be consumed
+        sleep(3)
+
+        # Check the consumed messages
+        assert len(consumed_messages) == 4
+
+        # Verify that the consumption order follows the 2:1 ratio for high priority messages
+        # Expected order: high, high, normal, high
+        assert consumed_messages[0]["id"] in [
+            2,
+            3,
+            4,
+        ]  # First message should be high priority
+        assert consumed_messages[1]["id"] in [
+            2,
+            3,
+            4,
+        ]  # Second message should be high priority
+        assert (
+            consumed_messages[2]["id"] == 1
+        )  # Third message should be normal priority
+        assert consumed_messages[3]["id"] in [
+            2,
+            3,
+            4,
+        ]  # Fourth message should be high priority
+
+        # Verify that all high priority messages were consumed
+        high_priority_ids = [
+            msg["id"] for msg in consumed_messages if msg["priority"] == "high"
+        ]
+        assert sorted(high_priority_ids) == [2, 3, 4]
+
+    finally:
+        # Clean up
+        consumer.close()
+        channel = publisher.connect()
+        channel.queue_purge(queue_name)
+        channel.queue_delete(queue_name)

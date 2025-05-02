@@ -1,0 +1,46 @@
+---
+description: PyRMQ Coding Style Guidelines
+globs: ["**/*.py"]
+alwaysApply: true
+---
+
+# PyRMQ Coding Style
+
+- Follow Black code formatting conventions (v24.2.0)
+- Use double quotes for strings
+- Include comprehensive docstrings in reST format
+- Add type hints for function parameters and return values
+- Private methods start with double underscore (__) for true name mangling
+- Public methods have comprehensive docstrings with param tags
+- Never use bare excepts, always specify exception types
+- Python 3.11+ compatibility required
+
+## Docstring Example
+```python
+def method_name(self, param1: str, param2: Optional[int] = None) -> bool:
+    """
+    Short description of what the method does.
+    
+    :param param1: Description of the first parameter
+    :param param2: Description of the second parameter
+    :return: Description of the return value
+    """
+    # method implementation
+```
+
+## Exception Handling Example
+```python
+# Good
+try:
+    some_operation()
+except ValueError as e:
+    handle_error(e)
+except Exception as e:
+    log_unexpected_error(e)
+
+# Bad
+try:
+    some_operation()
+except:  # Don't use bare excepts
+    handle_error()
+```

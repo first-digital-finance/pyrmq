@@ -1,0 +1,50 @@
+---
+description: Import order and patterns for PyRMQ
+globs: ["**/*.py"]
+alwaysApply: true
+---
+
+# Import Order
+
+- Standard library imports first
+- Third-party library imports second (including pika)
+- Local imports last
+- Sort alphabetically within each group
+- Use isort v5.13.2+ with Black profile
+- Use importlib.metadata instead of pkg_resources
+
+## Example
+```python
+import json
+import logging
+import os
+import time
+from importlib.metadata import version
+from typing import Optional
+
+from pika import (
+    BasicProperties,
+    BlockingConnection,
+    ConnectionParameters,
+    PlainCredentials,
+)
+from pika.adapters.blocking_connection import BlockingChannel
+from pika.exceptions import AMQPConnectionError
+
+from pyrmq import Consumer
+```
+
+## Version Import Example
+```python
+# Good - using importlib.metadata
+from importlib.metadata import version
+
+try:
+    __version__ = version("package_name")
+except Exception:
+    __version__ = "unknown"
+
+# Bad - using deprecated pkg_resources
+from pkg_resources import get_distribution  # Don't use pkg_resources
+__version__ = get_distribution("package_name").version
+```

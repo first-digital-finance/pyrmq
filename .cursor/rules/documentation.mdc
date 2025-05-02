@@ -1,0 +1,41 @@
+---
+description: Documentation guidelines for PyRMQ
+globs: ["**/*.py", "**/docs/**/*"]
+alwaysApply: true
+---
+
+# Documentation Guidelines
+
+- Update docs/api.rst when adding or changing public methods
+- Update examples in docs/usage.rst for new features
+- Keep README examples up to date with API changes
+- Ensure examples are properly formatted with code blocks
+- Documentation is built with Sphinx and hosted on ReadTheDocs
+
+## Module Documentation
+Every module should start with a docstring like:
+
+```python
+"""
+    Python with RabbitMQ—simplified so you won't have to.
+    This module implements PyRMQ Publisher class
+
+    :copyright: 2020-Present by Alexandre Gerona.
+    :license: MIT, see LICENSE for more details.
+
+    Full documentation is available at https://pyrmq.readthedocs.io
+"""
+```
+
+## RST Documentation
+When updating docs, follow the existing reST format:
+
+```rst
+Consumer
+========
+
+.. autoclass:: pyrmq.Consumer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```

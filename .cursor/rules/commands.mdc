@@ -1,0 +1,87 @@
+---
+description: Common development commands for PyRMQ
+alwaysApply: true
+---
+
+# Common Commands
+
+## Package Management with UV
+```bash
+# Install UV
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create a virtual environment
+uv venv
+
+# Activate the virtual environment
+source .venv/bin/activate  # Linux/macOS
+.venv\Scripts\activate     # Windows
+
+# Install the package with development dependencies
+uv add -e .[dev]
+
+# Install specific Python version
+uv python install 3.11
+
+# Create venv with specific Python version
+uv venv --python 3.11
+```
+
+## Testing
+```bash
+# Run all tests
+uv run pytest
+
+# Test with specific Python version
+uv run --python 3.11 pytest
+
+# Run tests with tox for all Python versions
+uv tool install tox --with tox-uv
+tox
+
+# Run tests for specific Python version
+tox -e py311
+```
+
+## Code Style
+```bash
+# Run pre-commit hooks
+pre-commit run --all-files
+
+# Check formatting with Black
+black --check .
+
+# Format code with Black
+black .
+
+# Check import sorting
+isort --check-only --profile black .
+
+# Sort imports
+isort --profile black .
+```
+
+## Building & Publishing
+```bash
+# Build the package
+uv build
+
+# Publish to PyPI
+uv publish --token YOUR_PYPI_TOKEN
+```
+
+## Documentation
+```bash
+# Build documentation
+cd docs
+make html
+
+# Check documentation links
+cd docs
+make linkcheck
+
+# Build and serve documentation locally
+cd docs
+make html
+python -m http.server -d _build/html
+```
