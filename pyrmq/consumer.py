@@ -111,9 +111,8 @@ class Consumer(object):
             heartbeat=self.heart_beat,
         )
 
-        self.queue_args["x-queue-type"] = "quorum"
-        if kwargs.get("classic_queue") or "x-max-priority" in self.queue_args:
-            self.queue_args["x-queue-type"] = "classic"
+        if "x-queue-type" not in self.queue_args:
+            self.queue_args["x-queue-type"] = "quorum"
 
         self.retry_queue_name = f"{self.queue_name}.{self.retry_queue_suffix}"
 

@@ -153,15 +153,15 @@ def should_handle_different_ident():
 
 
 def should_publish_with_classic_queue():
-    """Test that publishing works correctly when classic_queue is set to True."""
+    """Test that publishing works correctly using a classic queue"""
     classic_queue_name = "classic_publisher_test_queue"
 
-    # Create a publisher with classic_queue=True
+    # Create a publisher with x-queue-type=classic
     publisher = Publisher(
         exchange_name=TEST_EXCHANGE_NAME,
         queue_name=classic_queue_name,
         routing_key=TEST_ROUTING_KEY,
-        classic_queue=True,
+        queue_args={"x-queue-type": "classic"},
     )
 
     # Publish a message
@@ -179,7 +179,7 @@ def should_publish_with_classic_queue():
         queue_name=classic_queue_name,
         routing_key=TEST_ROUTING_KEY,
         callback=callback,
-        classic_queue=True,
+        queue_args={"x-queue-type": "classic"},
     )
 
     consumer.start()
