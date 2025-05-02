@@ -12,7 +12,6 @@ import json
 import logging
 import os
 import time
-from datetime import datetime, timedelta
 from threading import Thread
 from typing import Callable, Optional, Union
 
@@ -73,8 +72,6 @@ class Consumer(object):
         :keyword heart_beat: Heartbeat seconds to wait for consumer process. Default: ``None``
         """
 
-        from pyrmq import Publisher
-
         self.connection = None
         self.exchange_name = exchange_name
         self.queue_name = queue_name
@@ -87,10 +84,6 @@ class Consumer(object):
         self.password = kwargs.get("password", "guest")
         self.connection_attempts = kwargs.get("connection_attempts", 3)
         self.retry_delay = kwargs.get("retry_delay", 5)
-        self.retry_interval = kwargs.get("retry_interval", 5)
-        self.is_dlk_retry_enabled = kwargs.get("is_dlk_retry_enabled", False)
-        self.retry_queue_suffix = kwargs.get("retry_queue_suffix", "retry")
-        self.max_retries = kwargs.get("max_retries", 20)
         self.error_callback = kwargs.get("error_callback")
         self.infinite_retry = kwargs.get("infinite_retry", False)
         self.exchange_args = kwargs.get("exchange_args")
@@ -113,23 +106,6 @@ class Consumer(object):
 
         if "x-queue-type" not in self.queue_args:
             self.queue_args["x-queue-type"] = "quorum"
-
-        self.retry_queue_name = f"{self.queue_name}.{self.retry_queue_suffix}"
-
-        if self.is_dlk_retry_enabled:
-            self.retry_publisher = Publisher(
-                exchange_name=self.retry_queue_name,
-                queue_name=self.retry_queue_name,
-                routing_key=self.retry_queue_name,
-                username=self.username,
-                password=self.password,
-                port=self.port,
-                host=self.host,
-                queue_args={
-                    "x-dead-letter-exchange": self.exchange_name,
-                    "x-dead-letter-routing-key": self.routing_key,
-                },
-            )
 
     def declare_queue(self) -> None:
         """
@@ -235,43 +211,7 @@ class Consumer(object):
         """
         return BlockingConnection(self.connection_parameters)
 
-    def _publish_to_retry_queue(
-        self, data: dict, properties, retry_reason: Exception
-    ) -> None:
-        """
-        Publish message to retry queue with the appropriate metadata in the headers.
-        """
-        headers = properties.headers or {}
-        attempt = headers.get("x-attempt", 0) + 1
-        self.__send_consume_error_message(retry_reason, attempt)
-
-        if attempt > self.max_retries:
-            return
-
-        expiration = self.retry_interval * 1000
-        now = datetime.now()
-        next_attempt = now + timedelta(seconds=self.retry_interval)
-        message_properties = {
-            **properties.__dict__,
-            "expiration": str(expiration),
-            "headers": {
-                **headers,
-                "x-attempt": attempt,
-                "x-max-attempts": self.max_retries,
-                "x-created-at": headers.get("x-created-at", now.isoformat()),
-                "x-retry-reason": repr(retry_reason),
-                "x-next-attempt": next_attempt.isoformat(),
-            },
-        }
-
-        for i in range(1, attempt + 1):
-            attempt_no = f"x-attempt-{i}"
-            previous_attempts = message_properties["headers"]
-            previous_attempts[attempt_no] = previous_attempts.get(
-                attempt_no, now.isoformat()
-            )
-
-        self.retry_publisher.publish(data, message_properties=message_properties)
+    # DLK retry functionality removed
 
     def _consume_message(self, channel, method, properties, data: dict) -> None:
         """
@@ -298,11 +238,7 @@ class Consumer(object):
             )
 
         except Exception as error:
-            if self.is_dlk_retry_enabled:
-                self._publish_to_retry_queue(data, properties, error)
-
-            else:
-                self.__send_consume_error_message(error)
+            self.__send_consume_error_message(error)
 
         if auto_ack or (auto_ack is None and self.auto_ack):
             channel.basic_ack(delivery_tag=method.delivery_tag)

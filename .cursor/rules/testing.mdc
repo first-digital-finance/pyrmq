@@ -42,5 +42,5 @@ pytest
 tox
 
 # Run tests for specific Python version
-tox -e py38
+tox -e py311
 ```
