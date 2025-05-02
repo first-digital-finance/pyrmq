@@ -131,6 +131,27 @@ class Consumer(object):
                 },
             )
 
+            retry_channel = BlockingConnection(
+                self.retry_publisher.connection_parameters
+            ).channel()
+            retry_channel.exchange_declare(
+                exchange=self.retry_queue_name,
+                durable=True,
+                exchange_type=self.exchange_type,
+                arguments=self.exchange_args,
+            )
+            retry_channel.queue_declare(
+                queue=self.retry_queue_name,
+                arguments=self.retry_publisher.queue_args,
+                durable=True,
+            )
+            retry_channel.queue_bind(
+                queue=self.retry_queue_name,
+                exchange=self.retry_queue_name,
+                routing_key=self.retry_queue_name,
+                arguments=self.queue_args,
+            )
+
     def declare_queue(self) -> None:
         """
         Declare and bind a channel to a queue.

@@ -10,11 +10,19 @@ from typing import Dict
 from unittest.mock import PropertyMock, patch
 
 import pytest
+from pika import BlockingConnection
 from pika.exceptions import AMQPChannelError, AMQPConnectionError, ChannelClosedByBroker
 
 from pyrmq import Consumer, Publisher
 from pyrmq.publisher import CONNECT_ERROR
-from pyrmq.tests.conftest import TEST_EXCHANGE_NAME, TEST_QUEUE_NAME, TEST_ROUTING_KEY
+from pyrmq.tests.conftest import (
+    TEST_EXCHANGE_NAME,
+    TEST_QUEUE_NAME,
+    TEST_ROUTING_KEY,
+    cleanup_queue_and_exchange,
+    create_exchange,
+    create_queue_and_exchange,
+)
 from pyrmq.tests.test_consumer import assert_consumed_message
 
 
@@ -55,6 +63,7 @@ def should_handle_connection_error_when_publishing():
         routing_key="incorrect_routing_key",
         error_callback=error_callback,
     )
+    create_queue_and_exchange(publisher)
     body = {"sample_body": "value"}
 
     with patch(
@@ -66,6 +75,7 @@ def should_handle_connection_error_when_publishing():
                 publisher.publish(body)
 
     assert sleep.call_count == publisher.connection_attempts - 1
+    cleanup_queue_and_exchange(publisher)
 
 
 def should_handle_channel_error_when_publishing(publisher_session):
@@ -92,6 +102,7 @@ def should_handle_exception_from_error_callback():
         routing_key="incorrect_routing_key",
         error_callback=error_callback,
     )
+    create_queue_and_exchange(publisher)
     body = {"sample_body": "value"}
 
     with patch(
@@ -103,15 +114,15 @@ def should_handle_exception_from_error_callback():
                 publisher.publish(body)
 
     assert sleep.call_count == publisher.connection_attempts - 1
+    cleanup_queue_and_exchange(publisher)
 
 
 def should_throw_error_on_non_existing_exchange_or_queue():
-    """Test that an exception is raised when trying to publish to a non-existing exchange or queue with auto_create=False."""
+    """Test that an exception is raised when trying to publish to a non-existing exchange or queue"""
     publisher = Publisher(
         exchange_name="non_existing_exchange",
         queue_name="non_existing_queue",
         routing_key="non_existing_routing_key",
-        auto_create=False,
     )
 
     with pytest.raises(ChannelClosedByBroker):
@@ -139,17 +150,21 @@ def should_handle_infinite_retry():
 
 
 def should_handle_different_ident():
+    publisher = Publisher(
+        exchange_name=TEST_EXCHANGE_NAME,
+        queue_name=TEST_QUEUE_NAME,
+        routing_key=TEST_ROUTING_KEY,
+    )
+    create_queue_and_exchange(publisher)
+
     with patch("threading.Thread.ident", new_callable=PropertyMock) as mock_ident:
         mock_ident.side_effect = [11111, 22222]
 
         with patch("pika.adapters.blocking_connection.BlockingChannel.basic_publish"):
-            publisher = Publisher(
-                exchange_name=TEST_EXCHANGE_NAME,
-                queue_name=TEST_QUEUE_NAME,
-                routing_key=TEST_ROUTING_KEY,
-            )
             publisher.publish({})
             publisher.publish({})
+
+    cleanup_queue_and_exchange(publisher)
 
 
 def should_publish_with_classic_queue():
@@ -163,6 +178,9 @@ def should_publish_with_classic_queue():
         routing_key=TEST_ROUTING_KEY,
         queue_args={"x-queue-type": "classic"},
     )
+
+    # Create queue and exchange before publishing
+    create_queue_and_exchange(publisher)
 
     # Publish a message
     test_message = {"test": "classic_publisher_test"}
@@ -187,9 +205,7 @@ def should_publish_with_classic_queue():
     consumer.close()
 
     # Clean up
-    channel = publisher.connect()
-    channel.queue_purge(classic_queue_name)
-    channel.queue_delete(classic_queue_name)
+    cleanup_queue_and_exchange(publisher)
 
 
 def should_publish_to_the_routed_queue_as_specified_in_headers():
@@ -201,7 +217,6 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
     test whether the first_queue gets the message just by
     setting the headers correctly.
     """
-
     exchange_headers_name = "test_headers_exchange"
 
     # Create and publish to first queue with enabled routing.
@@ -213,6 +228,7 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
         routing_key="first_queue",
         queue_args=first_queue_args,
     )
+    create_queue_and_exchange(first_publisher)
     first_properties = {"headers": {"routing.first": "first"}}
     first_publisher.publish({"test": "test"}, message_properties=first_properties)
 
@@ -225,6 +241,7 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
         routing_key="second_queue",
         queue_args=second_queue_args,
     )
+    create_queue_and_exchange(second_publisher)
     second_properties = {"headers": {"routing.second": "second"}}
     second_publisher.publish({"test": "test"}, message_properties=second_properties)
 
@@ -234,6 +251,11 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
         exchange_type="headers",
         queue_args=first_queue_args,
     )
+    third_publisher_channel = BlockingConnection(
+        third_publisher.connection_parameters
+    ).channel()
+    create_exchange(third_publisher_channel, third_publisher)
+    third_publisher_channel.close()
     third_publisher.publish({"test": "test"}, message_properties=first_properties)
 
     first_response = {"count": 0}
@@ -269,3 +291,7 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
     second_consumer.start()
     assert_consumed_message(second_response, {"count": 1})
     second_consumer.close()
+
+    # Clean up, third publisher will get cleaned up along side first and second
+    cleanup_queue_and_exchange(first_publisher)
+    cleanup_queue_and_exchange(second_publisher)
