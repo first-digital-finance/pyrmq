@@ -1,0 +1,46 @@
+---
+description: Testing conventions for PyRMQ
+globs: ["**/tests/**/*.py"]
+alwaysApply: true
+---
+
+# Testing Conventions
+
+- Test function names are descriptive and follow `should_do_something` pattern
+- Structure tests with setup, execute, assert, and cleanup phases
+- Use the provided fixtures for common setup/teardown
+- Use unittest.mock for mocking with context managers for patching
+
+## Test Function Example
+```python
+def should_handle_connection_error_when_connecting():
+    from pyrmq import Publisher
+
+    publisher = Publisher(
+        exchange_name="incorrect_exchange_name",
+        queue_name="incorrect_queue_name",
+        routing_key="incorrect_routing_key",
+    )
+
+    with patch(
+        "pika.adapters.blocking_connection.BlockingConnection.__init__",
+        side_effect=AMQPConnectionError,
+    ):
+        with patch("time.sleep") as sleep:
+            with pytest.raises(AMQPConnectionError):
+                publisher.publish({})
+
+    assert sleep.call_count == publisher.connection_attempts - 1
+```
+
+## Common Test Commands
+```bash
+# Run all tests
+pytest
+
+# Run tests with tox for all Python versions
+tox
+
+# Run tests for specific Python version
+tox -e py38
+```

@@ -1,3 +1,63 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "PyRMQ"
+version = "3.4.5"
+description = "Python with RabbitMQ—simplified so you won't have to."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Alexandre Gerona", email = "alecgerona@gmail.com"},
+]
+maintainers = [
+    {name = "Jasper Sibayan", email = "sibayanjasper@gmail.com"},
+]
+keywords = ["rabbitmq", "pika", "consumer", "publisher", "queue", "messages"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "pika>=1.1.0",
+]
+
+[project.urls]
+Documentation = "https://pyrmq.readthedocs.io"
+Code = "https://github.com/first-digital-finance/pyrmq"
+"Issue tracker" = "https://github.com/first-digital-finance/pyrmq/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pre-commit>=3.6.0",
+]
+docs = [
+    "sphinx>=8.2.3",
+    "PyYAML>=6.0.1",
+]
+test = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["pyrmq/tests"]
+python_files = "test_*.py"
+addopts = "--cov=pyrmq --cov-report=term --cov-fail-under=100"
+
 [tool.black]
 py38 = true
 

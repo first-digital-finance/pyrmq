@@ -1,0 +1,42 @@
+---
+description: Error handling patterns for PyRMQ
+globs: ["**/*.py"]
+alwaysApply: true
+---
+
+# Error Handling
+
+- Use the defined CONNECTION_ERRORS tuple for catching RabbitMQ connection issues
+- Implement retry logic consistent with existing methods
+- Log errors appropriately using the logger
+- Use error callbacks when provided
+
+## Connection Errors
+```python
+CONNECTION_ERRORS = (
+    AMQPConnectionError,
+    AMQPConnectorException,
+    AMQPChannelError,
+    ConnectionResetError,
+    ChannelClosedByBroker,
+    ConnectionError,
+)
+```
+
+## Retry Pattern
+```python
+try:
+    # Operation that might fail
+except CONNECTION_ERRORS as error:
+    if not (retry_count % self.connection_attempts):
+        self.__send_reconnection_error_message(
+            error, self.connection_attempts * retry_count
+        )
+
+        if not self.infinite_retry:
+            raise error
+
+    time.sleep(self.retry_delay)
+    
+    # Retry operation with incremented retry_count
+```

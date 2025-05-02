@@ -31,6 +31,10 @@ pip install pyrmq
 #### Publishing
 Just instantiate the feature you want with their respective settings.
 PyRMQ already works out of the box with RabbitMQ's [default initialization settings](https://hub.docker.com/_/rabbitmq).
+
+> **Note:** The Publisher class only verifies that exchanges exist and does not create queues or exchanges.
+> Exchanges must be created by a Consumer before a Publisher can use them.
+
 ```python
 from pyrmq import Publisher
 publisher = Publisher(
@@ -41,22 +45,39 @@ publisher = Publisher(
 publisher.publish({"pyrmq": "My first message"})
 ```
 #### Publish message with priorities
-To enable prioritization of messages, instantiate your queue with the queue 
-argument `x-max-priority`. It takes an integer that sets the number of possible 
-priority values with a higher number commanding more priority. Then, simply 
-publish your message with the priority argument specified. Any number higher 
-than the set max priority is floored or considered the same.
-Read more about message priorities [here](https://www.rabbitmq.com/priority.html).
-```python
-from pyrmq import Publisher
-publisher = Publisher(
-    exchange_name="exchange_name",
-    queue_name="queue_name",
-    routing_key="routing_key",
-    queue_args={"x-max-priority": 3},
-)
-publisher.publish({"pyrmq": "My first message"}, priority=1)
-```
+PyRMQ supports two ways to prioritize messages:
+
+1. **Quorum queues (recommended)**: Use the `is_priority` flag to set a priority of 5 (high priority).
+   ```python
+   from pyrmq import Publisher
+   publisher = Publisher(
+       exchange_name="exchange_name",
+       queue_name="queue_name",
+       routing_key="routing_key",
+   )
+   publisher.publish({"pyrmq": "High priority message"}, is_priority=True)  # Priority 5
+   publisher.publish({"pyrmq": "Normal message"})  # Default priority 0
+   ```
+   
+   In quorum queues, messages with priority 5-255 are considered high priority, and those with priority 0-4 are normal priority. When both types exist in the queue, RabbitMQ maintains a 2:1 ratio, delivering at least 2 high priority messages for every 1 normal priority message.
+
+2. **Classic queues**: For finer-grained control with numeric priorities, configure your Consumer with the `x-max-priority` 
+   argument and use message properties when publishing.
+   ```python
+   # When setting up the Consumer
+   consumer = Consumer(
+       exchange_name="exchange_name",
+       queue_name="queue_name",
+       routing_key="routing_key",
+       queue_args={"x-queue-type": "classic", "x-max-priority": 5},
+       callback=callback
+   )
+   
+   # When publishing
+   publisher.publish({"pyrmq": "Priority message"}, message_properties={"priority": 3})
+   ```
+
+Read more about message priorities [here](https://www.rabbitmq.com/docs/priority).
 
 | :warning: Warning                                                                                  |
 |:---------------------------------------------------------------------------------------------------|
@@ -197,12 +218,65 @@ For development, just run:
 ```shell script
 pytest
 ```
-To test for all the supported Python versions:
+To test for all the supported Python versions using UV:
 ```shell script
-pip install tox
+uv tool install tox --with tox-uv 
 tox
 ```
 To test for a specific Python version:
 ```shell script
 tox -e py38
+```
+
+## Development with UV
+
+This project uses [UV](https://github.com/astral-sh/uv), a fast Python package installer and resolver written in Rust.
+
+### Basic Setup
+
+```shell script
+# Install UV
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create a virtual environment (uses current Python version)
+uv venv
+
+# Activate the virtual environment
+source .venv/bin/activate  # Linux/macOS
+.venv\Scripts\activate     # Windows
+
+# Install the package with development dependencies
+uv add -e .[dev]
+
+# Run tests
+uv run pytest
+```
+
+### Working with Multiple Python Versions
+
+```shell script
+# List available Python versions
+uv python list
+
+# Install a specific Python version
+uv python install 3.8.19
+
+# Create a virtual environment with a specific Python version
+uv venv --python 3.8
+
+# Build with a specific Python version
+uv build --python 3.9
+
+# Run tests with a specific Python version
+uv run --python 3.11 pytest
+```
+
+### Building and Publishing
+
+```shell script
+# Build the package
+uv build
+
+# Publish to PyPI (requires a token)
+uv publish --token YOUR_PYPI_TOKEN
 ```

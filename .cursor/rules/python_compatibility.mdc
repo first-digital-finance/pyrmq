@@ -1,0 +1,63 @@
+---
+description: Python version compatibility and build system for PyRMQ
+globs: ["pyproject.toml"]
+alwaysApply: true
+---
+
+# Python Compatibility and Build System
+
+## Python Version Support
+- PyRMQ requires Python 3.11 or newer
+- Officially supported versions: 3.11, 3.12, 3.13, 3.14
+- Tests run across all supported Python versions
+- Use modern Python features and libraries
+
+## Build System
+- Uses hatchling build backend
+- Dependencies are specified in pyproject.toml
+- Project metadata is defined in pyproject.toml
+- No setup.py is needed
+
+## PyProject.toml Example
+```toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "PyRMQ"
+version = "3.4.5"
+description = "Python with RabbitMQ—simplified so you won't have to."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+# ...other metadata...
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pre-commit>=3.6.0",
+]
+docs = [
+    "sphinx>=8.2.3",
+    "PyYAML>=6.0.1",
+]
+test = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+]
+```
+
+## Specifying Python Versions in Classifiers
+```toml
+classifiers = [
+    # ...other classifiers...
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+```

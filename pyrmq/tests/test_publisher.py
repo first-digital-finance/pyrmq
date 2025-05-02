@@ -6,11 +6,17 @@
 
     Full documentation is available at https://pyrmq.readthedocs.io
 """
+
 from typing import Dict
 from unittest.mock import PropertyMock, patch
 
 import pytest
-from pika.exceptions import AMQPChannelError, AMQPConnectionError, ChannelClosedByBroker
+from pika.exceptions import (
+    AMQPChannelError,
+    AMQPConnectionError,
+    ChannelClosedByBroker,
+    UnroutableError,
+)
 
 from pyrmq import Consumer, Publisher
 from pyrmq.publisher import CONNECT_ERROR
@@ -105,13 +111,12 @@ def should_handle_exception_from_error_callback():
     assert sleep.call_count == publisher.connection_attempts - 1
 
 
-def should_throw_error_on_non_existing_exchange_or_queue():
-    """Test that an exception is raised when trying to publish to a non-existing exchange or queue with auto_create=False."""
+def should_throw_error_on_non_existing_exchange():
+    """Test that an exception is raised when trying to publish to a non-existing exchange."""
     publisher = Publisher(
         exchange_name="non_existing_exchange",
         queue_name="non_existing_queue",
         routing_key="non_existing_routing_key",
-        auto_create=False,
     )
 
     with pytest.raises(ChannelClosedByBroker):
@@ -155,6 +160,22 @@ def should_handle_different_ident():
 def should_publish_with_classic_queue():
     """Test that publishing works correctly using a classic queue"""
     classic_queue_name = "classic_publisher_test_queue"
+
+    # Create a consumer first to declare the queue
+    def callback(data, **kwargs):
+        pass  # pragma: no cover
+
+    consumer = Consumer(
+        exchange_name=TEST_EXCHANGE_NAME,
+        queue_name=classic_queue_name,
+        routing_key=TEST_ROUTING_KEY,
+        callback=callback,
+        queue_args={"x-queue-type": "classic"},
+    )
+
+    # Make sure the queue exists
+    consumer.connect()
+    consumer.declare_queue()
 
     # Create a publisher with x-queue-type=classic
     publisher = Publisher(
@@ -204,8 +225,39 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
 
     exchange_headers_name = "test_headers_exchange"
 
-    # Create and publish to first queue with enabled routing.
+    # First, create the consumers to declare the queues and exchanges
+    def dummy_callback(data, **kwargs):
+        pass  # pragma: no cover
+
+    # Set up first queue and exchange
     first_queue_args = {"routing.first": "first", "x-match": "all"}
+    first_consumer = Consumer(
+        exchange_name=exchange_headers_name,
+        queue_name="first_queue",
+        routing_key="first_queue",
+        queue_args=first_queue_args,
+        exchange_type="headers",
+        callback=dummy_callback,
+    )
+    first_consumer.connect()
+    first_consumer.declare_queue()
+
+    # Set up second queue and exchange
+    second_queue_args = {"routing.second": "second", "x-match": "all"}
+    second_consumer = Consumer(
+        exchange_name=exchange_headers_name,
+        queue_name="second_queue",
+        routing_key="second_queue",
+        queue_args=second_queue_args,
+        exchange_type="headers",
+        callback=dummy_callback,
+    )
+    second_consumer.connect()
+    second_consumer.declare_queue()
+
+    # Now create publishers and publish to queues
+
+    # Create and publish to first queue with enabled routing.
     first_publisher = Publisher(
         exchange_name=exchange_headers_name,
         exchange_type="headers",
@@ -217,7 +269,6 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
     first_publisher.publish({"test": "test"}, message_properties=first_properties)
 
     # Create and publish to second queue with enabled routing.
-    second_queue_args = {"routing.second": "second", "x-match": "all"}
     second_publisher = Publisher(
         exchange_name=exchange_headers_name,
         exchange_type="headers",
@@ -269,3 +320,41 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
     second_consumer.start()
     assert_consumed_message(second_response, {"count": 1})
     second_consumer.close()
+
+
+def should_raise_exception_if_exchange_exists_but_queue_does_not():
+    """Test that publishing to an exchange with no matching queue raises UnroutableError."""
+    # Create an exchange with no queue bound to it
+    exchange_name = "isolated_exchange"
+
+    # First, we need to declare the exchange through a consumer
+    def dummy_callback(data, **kwargs):
+        pass  # pragma: no cover
+
+    # Create a consumer that just declares the exchange
+    consumer = Consumer(
+        exchange_name=exchange_name,
+        queue_name="temp_queue",  # This queue won't be used
+        routing_key="temp_key",
+        callback=dummy_callback,
+    )
+
+    # Connect and declare the exchange, but we'll skip binding a queue to it
+    consumer.connect()
+    consumer.channel.exchange_declare(
+        exchange=exchange_name, durable=True, exchange_type="direct"
+    )
+
+    # Create a publisher that will try to publish to the exchange
+    publisher = Publisher(
+        exchange_name=exchange_name,
+        routing_key="non_existent_queue",  # No queue with this routing key exists
+    )
+
+    # Try to publish - should raise UnroutableError since no queue is bound to the exchange
+    with pytest.raises(UnroutableError):
+        publisher.publish({"test": "This message should be unroutable"})
+
+    # Clean up
+    channel = publisher.connect()
+    channel.exchange_delete(exchange_name)

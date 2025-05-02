@@ -6,8 +6,8 @@ PyRMQ
 .. image:: https://img.shields.io/pypi/v/pyrmq?style=for-the-badge
     :target: https://pypi.org/project/PyRMQ/
 
-.. image:: https://readthedocs.org/projects/pyrmq/badge/?version=latest&style=for-the-badge
-    :target: https://pyrmq.readthedocs.io
+.. image:: https://app.readthedocs.org/projects/pyrmq/badge/?version=latest&style=for-the-badge
+    :target: https://pyrmq.readthedocs.io/en/latest/
 
 .. image:: https://img.shields.io/pypi/pyversions/pyrmq?style=for-the-badge
     :target: https://pypi.org/project/PyRMQ/
@@ -145,6 +145,7 @@ You can use another exchange type just by simply specifying it in the Publisher 
 ``direct``.
 
 .. code-block:: python
+
     from pyrmq import Publisher
 
     queue_args = {"routing.sample": "sample", "x-match": "all"}
@@ -172,6 +173,7 @@ This is done by using ``bound_exchange``. This parameter accepts an object with 
 and its ``type``. Let's take a look at an example to see this in action.
 
 .. code-block:: python
+
     from pyrmq import Consumer
 
     def callback(data):
@@ -211,6 +213,7 @@ User Guide
 .. _pika: https://pypi.org/project/pika/
 .. _default initialization settings: https://hub.docker.com/_/rabbitmq
 .. _PyPI: https://pypi.org/project/PyRMQ/
-.. _here: https://www.rabbitmq.com/priority.html
-.. _RabbitMQ does not remove expired messages that aren't at the head of the queue: https://www.rabbitmq.com/ttl.html
-.. _e2e bindings: https://www.rabbitmq.com/e2e.html
+.. _here: https://www.rabbitmq.com/docs/priority
+.. _dead letter exchanges and queues: https://www.rabbitmq.com/docs/dlx
+.. _RabbitMQ does not remove expired messages that aren't at the head of the queue: https://www.rabbitmq.com/docs/ttl
+.. _e2e bindings: https://www.rabbitmq.com/docs/e2e

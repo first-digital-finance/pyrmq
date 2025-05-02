@@ -6,12 +6,16 @@
 
     Full documentation is available at https://pyrmq.readthedocs.io
 """
-from pkg_resources import get_distribution
+
+from importlib.metadata import version
 
 from pyrmq.consumer import Consumer
 from pyrmq.publisher import Publisher
 
-__version__ = get_distribution("pyrmq").version
+try:
+    __version__ = version("pyrmq")
+except Exception:  # pragma: no cover
+    __version__ = "unknown"
 
 __all__ = [
     Consumer.__name__,

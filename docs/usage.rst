@@ -6,6 +6,10 @@ Publishing
 Instantiate the :class:`~pyrmq.Publisher` class and plug in your application
 specific settings. PyRMQ already works out of the box with RabbitMQ's `default initialization settings`_.
 
+.. note::
+   The Publisher class only verifies that exchanges exist and does not create queues or exchanges.
+   Exchanges must be created by a Consumer before a Publisher can use them.
+
 .. code-block:: python
 
     from pyrmq import Publisher
@@ -41,12 +45,9 @@ When PyRMQ has tried one too many times, it will call your specified callback.
 
 Publish message with priorities
 -------------------------------
-To enable prioritization of messages, instantiate your queue with the queue
-argument `x-max-priority`. It takes an integer that sets the number of possible
-priority values with a higher number commanding more priority. Then, simply
-publish your message with the priority argument specified. Any number higher
-than the set max priority is floored or considered the same.
-Read more about message priorities `here`_
+PyRMQ supports message priorities for both quorum and classic queues.
+
+For quorum queues (the default), simply use the ``is_priority`` flag:
 
 .. code-block:: python
 
@@ -55,9 +56,32 @@ Read more about message priorities `here`_
         exchange_name="exchange_name",
         queue_name="queue_name",
         routing_key="routing_key",
-        queue_args={"x-max-priority": 3}
     )
-    publisher.publish({"pyrmq": "My first message"}, priority=1)
+    publisher.publish({"pyrmq": "High priority message"}, is_priority=True)  # Priority 5
+    publisher.publish({"pyrmq": "Normal message"})  # Default priority 0
+
+In quorum queues, messages with priority 5-255 are considered high priority, while messages
+with priority 0-4 are normal priority. When both high and normal priority messages exist
+in the queue, RabbitMQ will deliver at least 2 high priority messages for every 1 normal
+priority message, following a 2:1 ratio.
+
+For classic queues with finer-grained priority control, you can still use the classic
+priority system by configuring a queue with the ``x-max-priority`` argument and manually
+specifying a numeric priority value.
+
+.. code-block:: python
+
+    # When setting up the Consumer
+    consumer = Consumer(
+        exchange_name="exchange_name",
+        queue_name="queue_name",
+        routing_key="routing_key",
+        queue_args={"x-queue-type": "classic", "x-max-priority": 5},
+        callback=callback
+    )
+    
+    # When publishing
+    publisher.publish({"pyrmq": "Priority message"}, message_properties={"priority": 3})
 
 .. warning::
 
@@ -137,5 +161,5 @@ When PyRMQ has tried one too many times, it will call your specified callback.
 .. _basic_publish: https://pika.readthedocs.io/en/stable/modules/channel.html#pika.channel.Channel.basic_publish
 .. _start_consuming: https://pika.readthedocs.io/en/stable/modules/adapters/blocking.html#pika.adapters.blocking_connection.BlockingChannel.start_consuming
 .. _basic_ack: https://pika.readthedocs.io/en/stable/modules/channel.html#pika.channel.Channel.basic_ack
-.. _here: https://www.rabbitmq.com/priority.html
-.. _dead letter exchanges and queues: https://www.rabbitmq.com/dlx.html
+.. _here: https://www.rabbitmq.com/docs/priority
+.. _dead letter exchanges and queues: https://www.rabbitmq.com/docs/dlx
