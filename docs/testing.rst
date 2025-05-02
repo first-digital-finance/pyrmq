@@ -37,5 +37,5 @@ Install ``pip install tox`` and run:
 .. code-block:: console
 
     $ tox
-    $ tox -e py38  # If this is what you have installed or don't want to bother testing for other versions
+    $ tox -e py311  # If this is what you have installed or don't want to bother testing for other versions
 

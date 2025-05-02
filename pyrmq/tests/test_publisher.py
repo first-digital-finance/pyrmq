@@ -55,6 +55,19 @@ def should_handle_connection_error_when_publishing():
     def error_callback(*args, **kwargs):
         assert kwargs["error_type"] == CONNECT_ERROR
 
+    # Create a consumer first to declare the exchange so verify_exchange doesn't fail
+    from pyrmq import Consumer
+
+    dummy_consumer = Consumer(
+        exchange_name="incorrect_exchange_name",
+        queue_name="incorrect_queue_name",
+        routing_key="incorrect_routing_key",
+        callback=lambda x: x,
+    )
+    # Connect and declare the exchange
+    dummy_consumer.connect()
+    dummy_consumer.declare_queue()
+
     publisher = Publisher(
         exchange_name="incorrect_exchange_name",
         queue_name="incorrect_queue_name",
@@ -233,8 +246,8 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
     first_queue_args = {"routing.first": "first", "x-match": "all"}
     first_consumer = Consumer(
         exchange_name=exchange_headers_name,
-        queue_name="first_queue",
-        routing_key="first_queue",
+        queue_name="publisher_first_queue",
+        routing_key="publisher_first_queue",
         queue_args=first_queue_args,
         exchange_type="headers",
         callback=dummy_callback,
@@ -246,8 +259,8 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
     second_queue_args = {"routing.second": "second", "x-match": "all"}
     second_consumer = Consumer(
         exchange_name=exchange_headers_name,
-        queue_name="second_queue",
-        routing_key="second_queue",
+        queue_name="publisher_second_queue",
+        routing_key="publisher_second_queue",
         queue_args=second_queue_args,
         exchange_type="headers",
         callback=dummy_callback,
@@ -261,8 +274,8 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
     first_publisher = Publisher(
         exchange_name=exchange_headers_name,
         exchange_type="headers",
-        queue_name="first_queue",
-        routing_key="first_queue",
+        queue_name="publisher_first_queue",
+        routing_key="publisher_first_queue",
         queue_args=first_queue_args,
     )
     first_properties = {"headers": {"routing.first": "first"}}
@@ -272,8 +285,8 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
     second_publisher = Publisher(
         exchange_name=exchange_headers_name,
         exchange_type="headers",
-        queue_name="second_queue",
-        routing_key="second_queue",
+        queue_name="publisher_second_queue",
+        routing_key="publisher_second_queue",
         queue_args=second_queue_args,
     )
     second_properties = {"headers": {"routing.second": "second"}}
@@ -294,8 +307,8 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
 
     first_consumer = Consumer(
         exchange_name=exchange_headers_name,
-        queue_name="first_queue",
-        routing_key="first_queue",
+        queue_name="publisher_first_queue",
+        routing_key="publisher_first_queue",
         queue_args=first_queue_args,
         exchange_type="headers",
         callback=first_callback,
@@ -311,8 +324,8 @@ def should_publish_to_the_routed_queue_as_specified_in_headers():
 
     second_consumer = Consumer(
         exchange_name=exchange_headers_name,
-        queue_name="second_queue",
-        routing_key="second_queue",
+        queue_name="publisher_second_queue",
+        routing_key="publisher_second_queue",
         queue_args=second_queue_args,
         exchange_type="headers",
         callback=second_callback,

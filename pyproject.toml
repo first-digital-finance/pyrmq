@@ -58,7 +58,7 @@ python_files = "test_*.py"
 addopts = "--cov=pyrmq --cov-report=term --cov-fail-under=100"
 
 [tool.black]
-py38 = true
+py311 = true
 
 [tool.isort]
 # See https://black.readthedocs.io/en/stable/compatible_configs.html for more details.

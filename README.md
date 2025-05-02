@@ -225,7 +225,7 @@ tox
 ```
 To test for a specific Python version:
 ```shell script
-tox -e py38
+tox -e py311
 ```
 
 ## Development with UV
