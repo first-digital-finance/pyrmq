@@ -1,3 +1,28 @@
+# [4.0.0](https://github.com/first-digital-finance/pyrmq/compare/v3.4.5...v4.0.0) (2025-05-05)
+
+
+### Features
+
+* **consumer:** add auto_create option and handle non-existing exchanges/queues ([275e73b](https://github.com/first-digital-finance/pyrmq/commit/275e73b11cb4b4e3a7c817fc951bd2966c9fbaa1))
+* **consumer:** re-added dead-letter queue (DLK) retry functionality ([e00440a](https://github.com/first-digital-finance/pyrmq/commit/e00440ab7b15b0d0b90731aeefc04f71c77e3567))
+* **consumer:** remove auto_create option and add tests for classic queue functionality ([8ed337a](https://github.com/first-digital-finance/pyrmq/commit/8ed337a84f64df8ed6559682da211d6e7e410f5c))
+* enhance queue configuration to support classic and quorum types, update tests for classic queue usage ([58d4e0a](https://github.com/first-digital-finance/pyrmq/commit/58d4e0ab465a214fa2904e9c8a7b1d713021f395))
+* enhance queue configuration with support for classic and quorum types ([530b904](https://github.com/first-digital-finance/pyrmq/commit/530b904d8a868fffeac9659d095f376fd3616923))
+* **publisher:** add auto_create option for exchange and queue declaration ([3ab04d5](https://github.com/first-digital-finance/pyrmq/commit/3ab04d53fa08c274522c2f21959133f03a9bb85b))
+* **publisher:** remove queue declaration from Publisher class ([a4ee0a5](https://github.com/first-digital-finance/pyrmq/commit/a4ee0a54c6f99c62dbbba5b8dff511b12b286d00))
+
+
+### BREAKING CHANGES
+
+* **publisher:** Publishers no longer create queues or exchanges by default. Consumers
+must declare exchanges and queues before Publishers can use them.
+
+- Publishers now only verify that exchanges exist but do not create them
+- Added is_priority flag for quorum queues that sets priority to 5
+- Updated tests to declare queues before publishing
+- Fixed UnroutableError handling and added test coverage
+- Updated documentation for all changes
+
 ## [3.4.5](https://github.com/first-digital-finance/pyrmq/compare/v3.4.4...v3.4.5) (2024-09-10)
 
 
