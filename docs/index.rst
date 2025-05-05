@@ -1,7 +1,7 @@
 PyRMQ
 =====
-.. image:: https://img.shields.io/github/workflow/status/first-digital-finance/pyrmq/Test%20across%20Python%20versions?style=for-the-badge
-    :target: https://github.com/first-digital-finance/pyrmq
+.. image:: https://img.shields.io/github/actions/workflow/status/first-digital-finance/pyrmq/testing.yml?branch=master&style=for-the-badge
+    :target: https://github.com/first-digital-finance/pyrmq/actions/workflows/testing.yml
 
 .. image:: https://img.shields.io/pypi/v/pyrmq?style=for-the-badge
     :target: https://pypi.org/project/PyRMQ/
