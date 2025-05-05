@@ -179,6 +179,73 @@ def should_handle_error_when_consuming(publisher_session: Publisher):
             consumer.close()
 
 
+def should_republish_message_to_original_queue_with_dlk_retry_enabled(
+    publisher_session: Publisher,
+):
+    body = {"test": "test"}
+
+    publisher_session.publish(
+        body, message_properties={"headers": {"x-origin": "sample"}}
+    )
+
+    response = {"count": 0}
+    error_response = {"count": 0}
+
+    def callback(data: dict, **kwargs):
+        response["count"] = response["count"] + 1
+        raise Exception
+
+    def error_callback(*args, **kwargs):
+        error_response["count"] = error_response["count"] + 1
+
+    consumer = Consumer(
+        exchange_name=publisher_session.exchange_name,
+        queue_name=publisher_session.queue_name,
+        routing_key=publisher_session.routing_key,
+        callback=callback,
+        is_dlk_retry_enabled=True,
+        retry_interval=1,
+        error_callback=error_callback,
+    )
+    consumer.start()
+    assert_consumed_message(response, {"count": 3})
+    assert_consumed_message(error_response, {"count": 3})
+
+    consumer.close()
+
+
+def should_retry_up_to_max_retries_with_proper_headers_with_dlk_retry_enabled(
+    publisher_session: Publisher,
+):
+    body = {"test": "test"}
+
+    publisher_session.publish(
+        body, message_properties={"headers": {"x-origin": "sample"}}
+    )
+
+    new_response = {"count": 0}
+
+    def callback(data: dict, **kwargs):
+        new_response["count"] = new_response["count"] + 1
+        raise Exception
+
+    consumer = Consumer(
+        exchange_name=publisher_session.exchange_name,
+        queue_name=publisher_session.queue_name,
+        routing_key=publisher_session.routing_key,
+        callback=callback,
+        is_dlk_retry_enabled=True,
+        retry_interval=1,
+        max_retries=1,
+    )
+    consumer.start()
+
+    with pytest.raises(AssertionError):
+        assert_consumed_message(new_response, {"count": 3})
+
+    consumer.close()
+
+
 def should_get_message_with_higher_priority_in_classic_queue(
     priority_session: Publisher,
 ):
