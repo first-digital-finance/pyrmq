@@ -31,7 +31,7 @@ does it for you.
 - Use out-of-the-box :class:`~pyrmq.Consumer` and :class:`~pyrmq.Publisher` classes created from `pika`_ for your projects and tests.
 - Custom DLX-DLK-based retry logic for message consumption.
 - Message priorities
-- Works with Python 3.
+- Works with Python 3.11-3.13.
 - Production ready
 
 Quickstart
@@ -57,23 +57,41 @@ PyRMQ already works out of the box with RabbitMQ's `default initialization setti
 
 Publish message with priorities
 -------------------------------
-To enable prioritization of messages, instantiate your queue with the queue
-argument `x-max-priority`. It takes an integer that sets the number of possible
-priority values with a higher number commanding more priority. Then, simply
-publish your message with the priority argument specified. Any number higher
-than the set max priority is floored or considered the same.
+PyRMQ supports two ways to prioritize messages:
+
+1. **Quorum queues (recommended)**: Use the `is_priority` flag to set a priority of 5 (high priority).
+
+   .. code-block:: python
+
+       from pyrmq import Publisher
+       publisher = Publisher(
+           exchange_name="exchange_name",
+           queue_name="queue_name",
+           routing_key="routing_key",
+       )
+       publisher.publish({"pyrmq": "High priority message"}, is_priority=True)  # Priority 5
+       publisher.publish({"pyrmq": "Normal message"})  # Default priority 0
+   
+   In quorum queues, messages with priority 5-255 are considered high priority, and those with priority 0-4 are normal priority. When both types exist in the queue, RabbitMQ maintains a 2:1 ratio, delivering at least 2 high priority messages for every 1 normal priority message.
+
+2. **Classic queues**: For finer-grained control with numeric priorities, configure your Consumer with the `x-max-priority` 
+   argument and use message properties when publishing.
+
+   .. code-block:: python
+
+       # When setting up the Consumer
+       consumer = Consumer(
+           exchange_name="exchange_name",
+           queue_name="queue_name",
+           routing_key="routing_key",
+           queue_args={"x-queue-type": "classic", "x-max-priority": 5},
+           callback=callback
+       )
+       
+       # When publishing
+       publisher.publish({"pyrmq": "Priority message"}, message_properties={"priority": 3})
+
 Read more about message priorities `here`_
-
-.. code-block:: python
-
-    from pyrmq import Publisher
-    publisher = Publisher(
-        exchange_name="exchange_name",
-        queue_name="queue_name",
-        routing_key="routing_key",
-        queue_args={"x-max-priority": 3}
-    )
-    publisher.publish({"pyrmq": "My first message"}, priority=1)
 
 .. warning::
 
