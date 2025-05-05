@@ -12,12 +12,12 @@
     "@semantic-release/changelog",
     "@semantic-release/github",
     ["@semantic-release/exec", {
-      "verifyReleaseCmd": "echo ${nextRelease.version} > VERSION",
-      "publishCmd": "python setup.py sdist bdist_wheel && twine upload dist/*"
+      "verifyReleaseCmd": "echo ${nextRelease.version} > VERSION && sed -i 's/version = \"[0-9]+\\.[0-9]+\\.[0-9]+\"/version = \"${nextRelease.version}\"/' pyproject.toml",
+      "publishCmd": "uv build && uv publish --token $PYPI_TOKEN"
     }],
     {
       "path": "@semantic-release/git",
-      "assets": ["VERSION", "CHANGELOG.md"],
+      "assets": ["VERSION", "CHANGELOG.md", "pyproject.toml"],
       "message": "chore(release): ${nextRelease.version} [skip ci]nn${nextRelease.notes}"
     }
   ]
