@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "PyRMQ"
-version = "3.4.5"
+version = "4.0.0"
 description = "Python with RabbitMQ—simplified so you won't have to."
 readme = "README.md"
 requires-python = ">=3.11"
