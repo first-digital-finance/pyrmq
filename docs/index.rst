@@ -110,13 +110,14 @@ able to receive the published data.
     from pyrmq import Consumer
 
 
-    def callback(data):
+    def callback(data, **kwargs):
         print(f"Received {data}!")
 
     consumer = Consumer(
         exchange_name="exchange_name",
         queue_name="queue_name",
         routing_key="routing_key",
+        callback=callback,
     )
 
     consumer.start()
